@@ -1,0 +1,417 @@
+########################################
+# MSP-PODCAST Emotion (9-class, NEU-safe)
+########################################
+
+seed: 2026
+__set_seed: !apply:speechbrain.utils.seed_everything [!ref <seed>]
+
+# ==========================
+#   FREEZE / UNFREEZE
+# ==========================
+gradual_unfreeze: true
+
+# IMPORTANT: with number_of_epochs: 1 you will NEVER unfreeze anything.
+# If you want option C (unfreeze top layers), start unfreezing early.
+freeze_head_epochs: 0
+
+unfreeze_steps:
+  - { epoch: 1, layers: 2,  lr_factor: 1.0 }
+  - { epoch: 2, layers: 4,  lr_factor: 0.9 }
+  - { epoch: 4, layers: 8,  lr_factor: 0.8 }
+  - { epoch: 8, layers: 12, lr_factor: 0.7 }
+
+max_unfrozen_layers: 12
+
+# ==========================
+#   DATA PATHS
+# ==========================
+# Point these to your LOCAL audio + JSONs.
+# For an 80-sample debug run, create tiny JSONs (train/valid/test) inside `json_fold_dir`.
+
+data_folder: /path/to/MSP-PODCAST2.0/Audios
+json_root: /path/to/MSP-PODCAST2.0/i26_json
+rir_folder: /path/to/RIRS_NOISES/real_rirs_isotropic_noises
+
+# Make exp_tag descriptive (used as the output folder name)
+exp_tag: wavlm_hard_cbce_9cls
+
+output_folder: ./results/!ref <exp_tag>
+save_folder: !ref <output_folder>/save
+train_log: !ref <output_folder>/train_log.txt
+
+# throttle TRAIN metrics (avoid CPU sync + stalls)
+train_metrics_every: 100
+
+# ==========================
+#   RUN / CHECKPOINT CONTROL (moved from CLI)
+# ==========================
+mode: scratch              # scratch | resume | ft
+ckpt_path: ""              # path to a CKPT directory or a .ckpt file
+load_mode: backbone+heads   # backbone | backbone+heads | all
+
+# Re-init / freezing controls
+reset_head: false
+reset_clf: false
+reset_reg: false
+freeze: ""                 # regex of module names to freeze ("" = none)
+new_num_classes: null       # set only when changing classifier output size
+
+# ==========================
+#   LOGGER / CHECKPOINTS
+# ==========================
+train_logger: !new:speechbrain.utils.train_logger.FileTrainLogger
+  save_file: !ref <train_log>
+
+ckpt_interval_minutes: 0
+ckpt_save_latest: true
+ckpt_num_to_keep: 3
+recover_optimizers: true
+
+# wavlm_hub: microsoft/wavlm-base
+# wavlm_folder: !ref <save_folder>/wavlm_checkpoint
+
+# Download from HuggingFace (cached under wavlm_folder)
+wavlm_hub: microsoft/wavlm-base
+wavlm_folder: !ref <save_folder>/wavlm_checkpoint
+
+
+# ==========================
+#   LABEL DISTRIBUTION MODE
+# ==========================
+# The target distribution for soft labels is produced by `_get_cls_targets()` using `dist_mode`.
+
+dist_mode: hard            # hard | primary | secondary | merged
+soft_temp: 1.0
+
+json_fold_dir: !ref <json_root>/<dist_mode>_full9
+train_annotation: !ref <json_fold_dir>/train.json
+valid_annotation: !ref <json_fold_dir>/valid.json
+test_annotation:  !ref <json_fold_dir>/test.json
+
+# Label encoder object (must exist for checkpointer recoverables)
+label_encoder: !new:speechbrain.dataio.encoder.CategoricalEncoder
+# ==========================
+#   AUDIO / AUGMENTATION
+# ==========================
+sample_rate: 16000
+deterministic: true
+
+augmentation:
+  speed:      { p: 0.1, min: 0.95, max: 1.05 }
+  rir:        { p: 0.2, scale: 0.20 }
+  bandlimit:  { p: 0.3, low_hz: 150, high_hz: 6000, dry: 0.25 }
+  noise:      { p: 0.2, snr_min: 10, snr_max: 25 }
+  time_mask:  { p: 0.15, max_mask_pct: 0.05, num_masks: 2 }
+
+augmentation_scheduler:
+  enabled: true
+  phases:
+    # 1) warmup: keep aug light
+    - name: warmup
+      epoch_start: 1
+      epoch_end: 1
+      scale: 0.35
+      allowed_augs: [speed, noise]
+      allow_combinations: false
+
+    # 2) ramp: gradually increase aug strength
+    - name: ramp
+      epoch_start: 2
+      epoch_end: 6
+      scale_start: 0.45
+      scale_end: 1.00
+      allowed_augs: [speed, noise, bandlimit, time_mask]
+      allow_combinations: true
+
+    # 3) full: enable all configured augs at full strength
+    - name: full
+      epoch_start: 7
+      epoch_end: 999
+      scale: 1.00
+      allowed_augs: [speed, noise, bandlimit, time_mask, rir]
+      allow_combinations: true
+
+# ==========================
+#   MIXUP / CUTMIX (disabled)
+# ==========================
+mixup_enabled: false
+mixup_alpha: 0.4
+mixup_p: 0.7
+mixup_per_smp: false
+
+cutmix_enabled: false
+cutmix_alpha: 0.4
+cutmix_p: 0.5
+cutmix_per_smp: false
+
+# ==========================
+#   CHECKPOINT POLICY
+# ==========================
+checkpoint_metric: macro_f1   # model selection metric
+
+early_stopping:
+  enabled: true
+  metric: macro_f1
+  mode: max
+  patience: 4
+  min_delta: 0.001
+
+# ==========================
+#   TASK SETTINGS
+# ==========================
+out_n_neurons_cls: 9
+emo_classes: ["neu","hap","ang","sad","fear","disgust","contempt","surprise","other"]
+
+# ==========================
+#   CATEGORICAL LOSS CONFIG
+# ==========================
+cat_loss:
+  type: cbce          # ce | cbce | kld | jsd
+
+cbce:
+  enabled: true          # toggled automatically if cat_loss=cbce
+  beta: 0.9999            # effective number smoothing
+  reduction: mean
+  class_counts:
+    ang: 24910
+    contempt: 4278
+    disgust: 2066
+    fear: 1207
+    hap: 45328
+    neu: 50747
+    other: 3734
+    sad: 28919
+    surprise: 8001
+
+kld_weighting:
+  enabled: true
+  mode: class_counts
+  class_counts:
+    neu: 50708
+    hap: 46711
+    ang: 27936
+    sad: 29170
+    fear: 1199
+    disgust: 1876
+    contempt: 3989
+    surprise: 4772
+    other: 2829
+  power: 1.0
+  normalize: mean
+  min_w: 0.25
+  max_w: 5.0
+# ==========================
+#   LABEL DISTRIBUTION MODE
+# ==========================
+label_scheduler: null
+
+# VAD head config
+out_n_neurons: 6
+vad_target_scale: "1_7"
+vad_dim_weights: [1.4, 1.0, 1.0]
+
+# SmoothL1Loss beta used in compute_objectives()
+huber_beta: 0.2
+
+# If true, add CCC term as in compute_objectives()
+use_ccc_loss: true
+
+lambda_cat: 1.0
+lambda_vad: 0.3
+lambda_ccc: 0.1
+
+logvar_clip_min: -10.0
+logvar_clip_max: 10.0
+
+# ==========================
+#   AMBIGUITY-BASED CURRICULUM
+# ==========================
+entropy_curriculum:
+  enabled: false
+  mode: filter        # filter | weight
+  warmup_epochs: 5      # Make warmup 4–6 epochs so the head stabilizes before you filter.
+  ramp_epochs: 6
+  start_thr: 0.50       # Rule: you want at least half the data when curriculum starts.
+  end_thr: 0.95
+  alpha_start: 2.0
+  alpha_end: 0.0
+  min_weight: 0.15
+
+# Suggested starting range:
+#   mode: weight
+#   warmup_epochs: 2-3
+#   ramp_epochs: 10-12
+#   alpha_start: 2.0-3.0
+#   alpha_end: 0.5-1.0
+#   min_weight: 0.3-0.5
+
+ambiguity_signal_key: emo_entropy_norm_merged   # or emo_margin, ambiguity_signal, emo_maxprob
+
+# ==========================
+#   TRAINING
+# ==========================
+number_of_epochs: 18
+batch_size: 8
+grad_accum_steps: 4
+
+frame_loss_weight: 0.0
+
+ssl_lr: 1e-5
+head_lr: 1e-4
+
+freeze_wavlm: false
+freeze_wavlm_conv: false
+
+dataloader_options:
+  batch_size: !ref <batch_size>
+  shuffle: true
+  num_workers: 8
+  pin_memory: true
+  persistent_workers: true
+  drop_last: true
+
+valid_dataloader_options:
+  batch_size: !ref <batch_size>
+  shuffle: false
+  num_workers: 8
+  pin_memory: true
+  persistent_workers: true
+  drop_last: false
+
+test_dataloader_options:
+  batch_size: !ref <batch_size>
+  shuffle: false
+  num_workers: 8
+  pin_memory: true
+  persistent_workers: true
+  drop_last: false
+
+# ==========================
+#   MODEL HEAD (ONLY ONE)
+# ==========================
+# TC-GRU head config
+pretrained_model: wavlm
+use_tc_gru_head: true
+ssl_hidden_dim: 768   # wavlm-base hidden size; set correctly
+tc_gru_conv_channels: 256
+tc_gru_conv_kernel: 3
+tc_gru_gru_hidden: 256
+tc_gru_gru_layers: 2
+tc_gru_emb_dim: 256
+tc_gru_dropout: 0.3
+tc_gru_bidirectional: false
+
+hidden_size: 256
+
+# ===== Attentive Pooling =====
+use_attn_pooling: false
+attn_num_heads: 4
+attn_hidden_dim: 256
+attn_dropout: 0.1
+
+pooled_dim: !ref <tc_gru_emb_dim>
+# pooled_dim: !ref <ssl_hidden_dim>   # wavlm-base => 768
+
+# NOTE:
+# - When `use_tc_gru_head: true`, the head output embedding dim is `tc_gru_emb_dim` (256).
+# - `pooled_dim` MUST match that output and MUST be the input size of cat_mlp/vad_mlp.
+
+# --- Categorical head (Module) ---
+cat_proj: !new:speechbrain.nnet.linear.Linear
+  input_size: !ref <pooled_dim>
+  n_neurons: !ref <hidden_size>
+
+cat_proj_norm: !new:torch.nn.LayerNorm
+  normalized_shape: !ref <hidden_size>
+
+cat_proj_act: !new:torch.nn.GELU {}
+
+cat_proj_drop: !new:torch.nn.Dropout
+  p: 0.2
+
+cat_linear_out: !new:speechbrain.nnet.linear.Linear
+  input_size: !ref <hidden_size>
+  n_neurons: !ref <out_n_neurons_cls>
+
+cat_mlp: !new:torch.nn.Sequential
+  - !ref <cat_proj>
+  - !ref <cat_proj_norm>
+  - !ref <cat_proj_act>
+  - !ref <cat_proj_drop>
+  - !ref <cat_linear_out>
+
+# --- VAD head (Module) ---
+vad_proj: !new:speechbrain.nnet.linear.Linear
+  input_size: !ref <pooled_dim>
+  n_neurons: !ref <hidden_size>
+
+vad_proj_norm: !new:torch.nn.LayerNorm
+  normalized_shape: !ref <hidden_size>
+
+vad_proj_act: !new:torch.nn.GELU {}
+
+vad_proj_drop: !new:torch.nn.Dropout
+  p: 0.2
+
+vad_linear_out: !new:speechbrain.nnet.linear.Linear
+  input_size: !ref <hidden_size>
+  n_neurons: !ref <out_n_neurons>
+
+vad_mlp: !new:torch.nn.Sequential
+  - !ref <vad_proj>
+  - !ref <vad_proj_norm>
+  - !ref <vad_proj_act>
+  - !ref <vad_proj_drop>
+  - !ref <vad_linear_out>
+
+# ==========================
+#   EPOCH / MODULES / MODEL
+# ==========================
+epoch_counter: !new:speechbrain.utils.epoch_loop.EpochCounter
+  limit: !ref <number_of_epochs>
+
+modules:
+  ssl_model: null
+  cat_mlp: !ref <cat_mlp>
+  vad_mlp: !ref <vad_mlp>
+
+model: !new:torch.nn.ModuleList
+  modules: [!ref <cat_mlp>, !ref <vad_mlp>]
+
+# ==========================
+#   LOSS
+# ==========================
+ce: !name:torch.nn.CrossEntropyLoss
+kld: !new:torch.nn.KLDivLoss
+  reduction: batchmean
+  log_target: false
+
+# ==========================
+#   OPTIMIZATION
+# ==========================
+opt_class: !name:torch.optim.AdamW
+
+lr_annealing: !new:speechbrain.nnet.schedulers.NewBobScheduler
+  initial_value: !ref <head_lr>
+  improvement_threshold: 0.0025
+  annealing_factor: 0.9
+  patient: 0
+
+lr_annealing_ssl: !new:speechbrain.nnet.schedulers.NewBobScheduler
+  initial_value: !ref <ssl_lr>
+  improvement_threshold: 0.0025
+  annealing_factor: 0.9
+  patient: 0
+
+checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
+  checkpoints_dir: !ref <save_folder>
+  recoverables:
+    model: !ref <model>
+    lr_annealing: !ref <lr_annealing>
+    lr_annealing_ssl: !ref <lr_annealing_ssl>
+    counter: !ref <epoch_counter>
+    label_encoder: !ref <label_encoder>
+
+run_opts:
+  device: cuda
+  auto_mix_prec: true

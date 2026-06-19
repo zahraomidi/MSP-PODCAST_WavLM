@@ -1,0 +1,54 @@
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Experiment outputs
+logs/
+runs/
+results/
+outputs/
+checkpoints/
+save/
+wandb/
+lightning_logs/
+
+# Model artifacts
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.pkl
+*.joblib
+
+# Data/audio/features
+data/
+datasets/
+audio/
+features/
+*.wav
+*.flac
+*.mp3
+*.npy
+*.npz
+*.h5
+*.hdf5
+
+# LaTeX/build artifacts
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.toc
+*.synctex.gz
