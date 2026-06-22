@@ -43,6 +43,12 @@ This repository does **not** include MSP-Podcast data, audio files, extracted fe
 
 Users must obtain MSP-Podcast according to the official dataset license and update local paths in the configuration file before running experiments.
 
+Required label files in the MSP-Podcast `Labels` folder:
+
+- `labels_consensus.csv` is required for split assignment and for consensus-label mode.
+- `labels_detailed.json` is required because the released recipe writes VAD mean/variance/std targets.
+- `labels.txt` is required only when using primary/secondary distribution-based supervision.
+
 Example paths to update:
 
 ```yaml
@@ -51,17 +57,46 @@ json_root: /path/to/MSP-PODCAST2.0/i26_json
 rir_folder: /path/to/RIRS_NOISES/real_rirs_isotropic_noises
 ```
 
-To create the default hard-label manifest directory expected by `hparams/wavlm_ser_example.yaml`, run:
+To prepare the paper-relevant manifest variants, use one of the following:
+
+A. Recommended paper-style merged primary+secondary distribution manifests:
 
 ```bash
 python prepare_msp_podcast.py \
   --data_root /path/to/MSP-PODCAST2.0/Audios \
   --labels_folder /path/to/MSP-PODCAST2.0/Labels \
-  --output_dir /path/to/MSP-PODCAST2.0/i26_json/hard_full9 \
+  --output_dir /path/to/MSP-PODCAST2.0/i26_json/merged_full9_p95_s05 \
+  --class_preset 9 \
+  --merge_preset none \
+  --include_secondary_emos \
+  --primary_weight 0.95 \
+  --secondary_weight 0.05
+```
+
+B. Primary-vote distribution manifests:
+
+```bash
+python prepare_msp_podcast.py \
+  --data_root /path/to/MSP-PODCAST2.0/Audios \
+  --labels_folder /path/to/MSP-PODCAST2.0/Labels \
+  --output_dir /path/to/MSP-PODCAST2.0/i26_json/primary_full9 \
+  --class_preset 9 \
+  --merge_preset none
+```
+
+C. Optional direct consensus CSV mode:
+
+```bash
+python prepare_msp_podcast.py \
+  --data_root /path/to/MSP-PODCAST2.0/Audios \
+  --labels_folder /path/to/MSP-PODCAST2.0/Labels \
+  --output_dir /path/to/MSP-PODCAST2.0/i26_json/consensus_csv_full9 \
   --class_preset 9 \
   --merge_preset none \
   --consensus_only
 ```
+
+Direct consensus CSV mode is provided for completeness; it is not the recommended paper-style distributional setup.
 
 ## Example usage
 

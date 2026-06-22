@@ -21,9 +21,10 @@ from speechbrain.dataio.dataio import read_audio
 from speechbrain.utils.logger import get_logger
 
 logger = get_logger(__name__)
-# Debug counters (for sanity-checking label normalization)
+# Diagnostic counters for sanity-checking label normalization
 _DBG = Counter()
 _NOAGREE_TOKENS = {"x", "noagree", "no-agree", "no_agree", "no agreement", "no-agreement", "no_agreement"}
+# MSP-Podcast audio is expected to be 16 kHz in this preprocessing setup.
 SAMPLERATE = 16000
 
 # ---- canonical mappings ----
@@ -266,43 +267,6 @@ def _split_secondary_list(s: str, merge_map: dict | None = None, majors: set | N
             out.append(t)
     return out
 
-def _safe_float_or_none(x):
-    try:
-        v = float(x)
-        return None if math.isnan(v) or math.isinf(v) else v
-    except Exception:
-        return None
-
-def _norm_dist_dict(d: dict):
-    """Clamp negatives, drop non-numeric, renormalize to sum=1."""
-    if not isinstance(d, dict) or not d:
-        return {}
-    dd = {}
-    for k, v in d.items():
-        k2 = _norm_label(k)
-        v2 = _safe_float_or_none(v)
-        if k2 and v2 is not None and v2 >= 0:
-            dd[k2] = dd.get(k2, 0.0) + v2
-    s = sum(dd.values())
-    if s > 0:
-        for k in list(dd.keys()):
-            dd[k] /= s
-    return dd
-
-def _apply_group_map(dist: dict, group_map: dict):
-    """Map fine labels to grouped classes, then renorm."""
-    if not group_map:
-        return dist
-    out = defaultdict(float)
-    for k, p in dist.items():
-        key2 = group_map.get(k) or group_map.get(k.replace("other-", "")) or group_map.get(k.split("-")[0])
-        out[key2 if key2 else k] += float(p)
-    s = sum(out.values())
-    if s > 0:
-        for k in list(out.keys()):
-            out[k] /= s
-    return dict(out)
-
 
 def _norm_split(x: str):
     xl = x.lower()
@@ -461,7 +425,7 @@ def parse_labels_txt(labels_txt_path: str, data_root: str,
         sec_counts = Counter()
 
         workers = []
-        while i < N and lines[i].strip():  # process each annotator's label block for the current utterance
+        while i < N and lines[i].strip():   # process each annotator's label block for the current utterance
             parts = [p.strip() for p in lines[i].split(";") if p.strip()]; i += 1
             if len(parts) >= 2:
                 primary_raw = _norm_label(parts[1])
@@ -731,7 +695,7 @@ def _finalize_split(split_name: str, items: Dict[str, Dict], class_order: List[s
 def prepare_msppodcast(data_root: str, labels_dir: str, output_dir: str,
                        majors=None, use_soft_labels=True, include_secondary_emos=False,
                        primary_weight=0.9, secondary_weight=0.1,
-                       drop_onx=True, merge_map: Optional[Dict] = None):
+                       merge_map: Optional[Dict] = None):
     """Main entry to create MSP-Podcast train/valid/test JSONs."""
     os.makedirs(output_dir, exist_ok=True)
 
@@ -748,7 +712,6 @@ def prepare_msppodcast(data_root: str, labels_dir: str, output_dir: str,
     logger.info(f"Loaded VAD stats for {len(vad_stats)} utterances")
 
     merge_map = merge_map or {}
-    # _merge_map_norm = {str(k).lower(): _map_emotion(v, merge_map) or str(v).lower() for k, v in merge_map.items()}
     logger.info(f"Using merge_map: {merge_map}")
 
     if use_soft_labels:
@@ -756,7 +719,7 @@ def prepare_msppodcast(data_root: str, labels_dir: str, output_dir: str,
         if not os.path.exists(labels_txt):
             raise FileNotFoundError(f"{labels_txt} not found. Disable --include_secondary_emos or provide the file.")
         if include_secondary_emos:
-            # Full soft-label mode: primary + secondary + merged distributions
+            # Full soft-label mode: primary + secondary distributions from labels.txt with weighting.
             logger.info("Including secondary emotions in output JSONs.")
             entries = parse_labels_txt(
                 labels_txt, data_root,
@@ -868,7 +831,6 @@ def prepare_msppodcast(data_root: str, labels_dir: str, output_dir: str,
                     "wav": x[0],
                     "length": _safe_duration(x[0]),
                     "emo": final_emo,
-                    # Always include distribution keys for schema consistency (hard mode -> empty dicts)
                     "emo_dist_primary": {},
                     "emo_dist_secondary": {},
                     "emo_dist": {},
@@ -937,10 +899,9 @@ def prepare_msppodcast(data_root: str, labels_dir: str, output_dir: str,
 
     logger.info("All done.")
     if _DBG:
-        logger.info(f"[DEBUG] label-normalization counters: {dict(_DBG)}")
+        logger.info(f"[diagnostic] label-normalization counters: {dict(_DBG)}")
     if not any(len(v) for v in splits.values()):
-        logger.warning("All splits are empty — check that labels.txt and consensus CSV match and merge_map covers all emotion variants.")
-
+        logger.warning("All splits are empty — check that label files, audio paths, split assignments, and merge/class presets are consistent.")
 
 # ---------------------------------------------------------------------
 
@@ -952,7 +913,7 @@ if __name__ == "__main__":
     parser.add_argument("--data_root", type=str, required=True,
                         help="Directory containing the audio files (wav).")
     parser.add_argument("--labels_folder", type=str, required=True,
-                        help="Path to folder with labels_consensus.csv and labels.txt.")
+                        help="Path to folder with labels_consensus.csv, labels_detailed.json, and optionally labels.txt.")
     parser.add_argument("--output_dir", type=str, required=True,
                         help="Where to write train/valid/test JSONs.")
     parser.add_argument("--include_secondary_emos", action="store_true",
@@ -964,11 +925,11 @@ if __name__ == "__main__":
     parser.add_argument("--class_preset", type=str, default="",
                         choices=["", "4", "6", "8", "9"],
                         help="Primary-only class preset: 4={neu,hap,ang,sad}, 6=+{disgust,surprise}, 8=+{fear,contempt}, 9=+{other}. No-agreement (X/noagree) is mapped to 'other'.")
-    parser.add_argument("--merge_preset", type=str, default="paper_v1",
+    parser.add_argument("--merge_preset", type=str, default="none",
                         choices=["none", "minimal", "paper_v1", "paper_v1_nosur"],
                         help="Grouping strategy for the *_grouped fields. Canonical fields are always unmerged.")
     parser.add_argument("--consensus_only", action="store_true",
-                    help="Use only labels_consensus.csv (no labels.txt).")
+                        help="Use only labels_consensus.csv (no labels.txt).")
 
     args = parser.parse_args()
     use_soft_labels = not args.consensus_only
@@ -976,7 +937,8 @@ if __name__ == "__main__":
     # -----------------------------
     # Merge presets (grouping strategies)
     # -----------------------------
-    # IMPORTANT: These affect ONLY the *_grouped fields. Canonical `emo` / `emo_dist*` are always unmerged.
+    # Merge presets are optional legacy grouping strategies. For the 9-class paper setup,
+    # use merge_preset="none" to keep canonical emotion classes separate.
     MERGE_PRESETS = {
         # No merging (grouped == canonical)
         "none": {},
@@ -1006,7 +968,7 @@ if __name__ == "__main__":
         },
     }
 
-    preset = getattr(args, "merge_preset", "paper_v1")
+    preset = getattr(args, "merge_preset", "none")
     merge_map_norm = MERGE_PRESETS.get(preset, {})
 
     # -----------------------------
