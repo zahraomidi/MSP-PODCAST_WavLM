@@ -209,7 +209,7 @@ logvar_clip_max: 10.0
 #   AMBIGUITY-BASED CURRICULUM
 # ==========================
 entropy_curriculum:
-  enabled: false
+  enabled: true
   mode: filter            # filter | weight
   warmup_epochs: 5        # Make warmup 4–6 epochs so the head stabilizes before you filter.
   ramp_epochs: 6
