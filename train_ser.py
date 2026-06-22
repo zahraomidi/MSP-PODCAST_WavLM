@@ -13,7 +13,7 @@ from sklearn.metrics import f1_score, recall_score, precision_score
 
 from utils.augment import WaveformAugmenter
 from utils.soft_label_utils import apply_mixup, apply_cutmix
-from utils.soft_label_utils import one_hot, smooth_labels, gaussian_neighbor_smoothing
+from utils.soft_label_utils import one_hot
 from utils.accuracy import AccuracyStats
 from utils.freeze_utils import apply_unfreeze_schedule, _save_unfreeze_state, _load_unfreeze_state 
 from utils.model_utils import concordance_cc, _to_float_tensor, _to_long_tensor, save_model_info, export_test_predictions
