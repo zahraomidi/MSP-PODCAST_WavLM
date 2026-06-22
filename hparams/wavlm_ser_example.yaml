@@ -187,11 +187,6 @@ kld_weighting:
   normalize: mean
   min_w: 0.25
   max_w: 5.0
-# ==========================
-#   LABEL DISTRIBUTION MODE
-# ==========================
-label_scheduler: null
-
 # VAD head config
 out_n_neurons: 6
 vad_target_scale: "neg1_1"   # neg1_1 | zscore | 1_7

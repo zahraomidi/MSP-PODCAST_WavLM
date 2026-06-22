@@ -253,7 +253,7 @@ def speed_perturb_batch(x: torch.Tensor, sr: int, factor: float, keep_len: bool 
     """
     x: [B,T]; factor>1 -> faster/shorter; factor<1 -> slower/longer
     Performs a single resample, then crops/pads back to T if keep_len=True.
-    No peak normalization, no RMS override (keeps effort cues).
+    No peak normalization, no RMS override (preserves original amplitude/prosodic cues).
     """
     B, T = x.shape
     # For speed change, resample to sr/factor (e.g., 1.05 => sr/1.05)

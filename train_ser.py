@@ -31,7 +31,6 @@ from utils.metric_utils import (
 # from utils.subsampler import BalancedSubsetPerEpochSampler
 
 from utils.augmentation_scheduler import AugmentationScheduler
-from utils.label_scheduler import LabelScheduler
 from utils.model_utils import TemporalCNN
 from validate_config import validate_hparams
 from dataio_msp_podcast import dataio_prep
@@ -1017,15 +1016,7 @@ class SerBrain(sb.Brain):
         self._cat_soft_targets = None  # holds [B,C] for current TRAIN batch if mixup/cutmix produced soft labels
         # self._init_augmenter()  
 
-        # ---- classifier label scheduler (hard -> primary -> secondary) ----
-        label_sched_cfg = _hp_get(self.hparams, "label_scheduler", None)
-        if label_sched_cfg:
-            self.label_scheduler = LabelScheduler(label_sched_cfg)
-            self._log(f"[LabelScheduler] Enabled with {len(self.label_scheduler.phases)} phase(s).")
-        else:
-            self.label_scheduler = None
-            self._log("[LabelScheduler] Disabled (no label_scheduler config).")
-        self.current_label_mode = None
+        self.current_label_mode = str(_hp_get(self.hparams, "dist_mode", "merged")).lower()
 
         # ---- classification loss mode ----
         # NOTE: use_soft_targets is derived from cat_loss.type (single source of truth).
@@ -1280,16 +1271,16 @@ class SerBrain(sb.Brain):
 
         Priority order:
         1. Augmentation-created mixtures (MixUp / CutMix) stored in _cat_soft_targets
-        2. LabelScheduler mode:
+        2. Configured `dist_mode`:
             - "hard"      -> one-hot from y_idx (no emo_vec)
             - otherwise   -> dataset-provided emo_vec distributions
-        3. Synthetic targets from label smoothing / gaussian neighbor smoothing
+        3. Fallback synthetic one-hot targets from _build_targets().
         """
         # 1) If MixUp / CutMix produced soft labels for this TRAIN batch, use them.
         if stage == sb.Stage.TRAIN and getattr(self, "_cat_soft_targets", None) is not None:
             return self._normalize_distribution(self._cat_soft_targets.to(self.device))
 
-        # Determine current label mode: scheduler overrides hparams.dist_mode if present.
+        # Determine current label mode from the configured dist_mode.
         label_mode = getattr(self, "current_label_mode", None)
         if label_mode is None:
             label_mode = getattr(self.hparams, "dist_mode", "merged")
@@ -1697,7 +1688,7 @@ class SerBrain(sb.Brain):
                 wavs = self.augment(wavs, lens=lens, training=True)
 
             # Build base soft targets from the current label mode (hard / primary / merged).
-            # These are what MixUp / CutMix will mix, so they always respect the label scheduler.
+            # These are what MixUp / CutMix will mix, so they always respect the configured label mode.
             y_idx_raw = _to_long_tensor(batch.y_idx, self.device)
 
             # NOTE: _get_cls_targets will ignore self._cat_soft_targets when it is None
@@ -1706,7 +1697,7 @@ class SerBrain(sb.Brain):
 
             # Determine whether current label mode is hard or soft.
             # Use the same resolution logic as `_get_cls_targets()`:
-            #   - scheduler sets `self.current_label_mode`
+            #   - `self.current_label_mode` mirrors hparams.dist_mode
             #   - otherwise fall back to hparams.dist_mode (default: merged)
             # If soft labels (primary/merged), disable MixUp and CutMix to avoid over-smoothing.
             label_mode = getattr(self, "current_label_mode", None)
@@ -2548,24 +2539,8 @@ class SerBrain(sb.Brain):
         # ---- Training-specific logic ----
         if stage == sb.Stage.TRAIN and epoch is not None:
             self.epoch = int(epoch)
-            # Update classifier label mode from scheduler (if enabled)
-            if getattr(self, "label_scheduler", None) is not None:
-                mode = self.label_scheduler.get_mode(int(epoch))
-                self.current_label_mode = mode
-                # Try to mirror this into hparams.dist_mode so dist_pipeline picks the right emo_dist
-                try:
-                    setattr(self.hparams, "dist_mode", mode)
-                except Exception:
-                    try:
-                        # Fallback if hparams behaves like a dict
-                        self.hparams["dist_mode"] = mode
-                    except Exception:
-                        pass
-                self._log(f"Epoch {epoch} | label mode={mode}", tag="LABEL")
-            else:
-                # If no scheduler, just mirror any existing dist_mode to current_label_mode once
-                if self.current_label_mode is None:
-                    self.current_label_mode = str(getattr(self.hparams, "dist_mode", "merged")).lower()
+            self.current_label_mode = str(_hp_get(self.hparams, "dist_mode", "merged")).lower()
+            self._log(f"Epoch {epoch} | label mode={self.current_label_mode}", tag="LABEL")
             maybe_log_curriculum_event(self, epoch=int(epoch))
 
             # Apply gradual-unfreeze schedule (selective freezing)

@@ -3,13 +3,16 @@
 """
 soft_label_utils.py
 ----------------------------------
-Utilities for constructing soft target distributions for categorical emotion tasks.
+Optional soft-label and augmentation utilities for categorical emotion tasks.
+
+The public example configuration uses distributional labels from the dataset
+and disables MixUp/CutMix by default.
 
 Includes:
- - Gaussian neighbor smoothing
+ - Optional synthetic soft-target builders
  - Optional skew per class
- - Label smoothing fallback
- - Compatibility with MixUp / CutMix and SpeechBrain training
+ - One-hot / label smoothing fallbacks
+ - Optional MixUp / CutMix helpers for SpeechBrain training
 """
 
 import torch

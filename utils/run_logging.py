@@ -74,13 +74,6 @@ def _normalize_label_mode(mode: Any) -> str:
 def _resolve_label_mode(brain: Any) -> str:
     mode = getattr(brain, "current_label_mode", None)
     if mode is None:
-        sched = getattr(brain, "label_scheduler", None)
-        if sched is not None and hasattr(sched, "get_mode"):
-            try:
-                mode = sched.get_mode(1)
-            except Exception:
-                mode = None
-    if mode is None:
         mode = _cfg_get(getattr(brain, "hparams", None), "dist_mode", "merged")
     return _normalize_label_mode(mode)
 
@@ -230,7 +223,6 @@ def build_run_config(brain: Any, resume_meta: Optional[Dict[str, Any]] = None) -
         "curriculum": {
             "entropy_enabled": entropy_enabled,
             "entropy_mode": entropy_mode,
-            "label_scheduler_enabled": bool(getattr(brain, "label_scheduler", None) is not None),
         },
         "unfreeze_schedule": {
             "enabled": bool(_cfg_get(hparams, "gradual_unfreeze", False)),
@@ -290,7 +282,7 @@ def emit_run_header(brain: Any, run_cfg: Dict[str, Any], run_config_path: Option
         f"[RUN-HEADER] heads: cat_mlp={heads.get('cat_mlp')} vad_mlp={heads.get('vad_mlp')}",
         (
             f"[RUN-HEADER] curriculum: entropy_enabled={curr.get('entropy_enabled')} "
-            f"mode={curr.get('entropy_mode')} label_scheduler={curr.get('label_scheduler_enabled')}"
+            f"mode={curr.get('entropy_mode')}"
         ),
         (
             f"[RUN-HEADER] unfreeze_schedule: enabled={unfr.get('enabled')} "
