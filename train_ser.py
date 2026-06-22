@@ -1315,7 +1315,7 @@ class SerBrain(sb.Brain):
                 vec = self._normalize_distribution(vec)
                 temp = float(getattr(self, "soft_temp", 1.0))
                 if temp != 1.0:
-                    logits = torch.log(vec)
+                    logits = torch.log(vec.clamp_min(1e-8))
                     vec = torch.softmax(logits / temp, dim=-1)
                 return vec
 
@@ -1467,7 +1467,7 @@ class SerBrain(sb.Brain):
             )
 
     def _log_entropy_curriculum_epoch_debug(self, epoch):
-        """Emit a non-negotiable epoch-level curriculum debug line."""
+        """Emit an epoch-level curriculum diagnostic line."""
         if not bool(getattr(self, "entropy_curriculum_enabled", False)):
             return
 
