@@ -373,7 +373,7 @@ class WaveformAugmenter:
                     rir_files = sorted({p for pat in pats for p in glob.glob(pat, recursive=True)})
 
         # -------- read trim/onset from YAML (supports nested under augmentation.rir) --------
-        rir_cfg = self.cfg.get("rir", {})  # your YAML puts them here
+        rir_cfg = self.cfg.get("rir", {})  # YAML may provide RIR settings here
         trim_ms  = float(self.cfg.get("rir_trim_after_ms",  rir_cfg.get("rir_trim_after_ms",  80.0)))
         onset_db = float(self.cfg.get("rir_onset_db_drop",  rir_cfg.get("rir_onset_db_drop", 20.0)))
 
@@ -393,7 +393,7 @@ class WaveformAugmenter:
         # Optional logger (older SpeechBrain versions: may be None)
         self.logger = getattr(hparams, "train_logger", None)
 
-        # One concise info line so you know it worked
+        # Log one concise RIR discovery summary.
         try:
             msg = f"[AUG] RIR discovered: {len(rir_files)} file(s); trim={trim_ms}ms, onset_drop={onset_db}dB"
             if rir_files:
