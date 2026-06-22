@@ -65,7 +65,7 @@ A. Recommended paper-style merged primary+secondary distribution manifests:
 python prepare_msp_podcast.py \
   --data_root /path/to/MSP-PODCAST2.0/Audios \
   --labels_folder /path/to/MSP-PODCAST2.0/Labels \
-  --output_dir /path/to/MSP-PODCAST2.0/i26_json/merged_full9_p95_s05 \
+  --output_dir /path/to/MSP-PODCAST2.0/i26_json/merged_full9 \
   --class_preset 9 \
   --merge_preset none \
   --include_secondary_emos \
@@ -90,7 +90,7 @@ C. Optional direct consensus CSV mode:
 python prepare_msp_podcast.py \
   --data_root /path/to/MSP-PODCAST2.0/Audios \
   --labels_folder /path/to/MSP-PODCAST2.0/Labels \
-  --output_dir /path/to/MSP-PODCAST2.0/i26_json/consensus_csv_full9 \
+  --output_dir /path/to/MSP-PODCAST2.0/i26_json/hard_full9 \
   --class_preset 9 \
   --merge_preset none \
   --consensus_only

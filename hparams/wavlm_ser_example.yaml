@@ -33,7 +33,7 @@ json_root: /path/to/MSP-PODCAST2.0/i26_json
 rir_folder: /path/to/RIRS_NOISES/real_rirs_isotropic_noises
 
 # Make exp_tag descriptive (used as the output folder name)
-exp_tag: wavlm_hard_cbce_9cls
+exp_tag: wavlm_merged_kld_9cls
 
 output_folder: ./results/!ref <exp_tag>
 save_folder: !ref <output_folder>/save
@@ -53,7 +53,7 @@ load_mode: backbone+heads   # backbone | backbone+heads | all
 reset_head: false
 reset_clf: false
 reset_reg: false
-freeze: ""                 # regex of module names to freeze ("" = none)
+freeze: ""                  # regex of module names to freeze ("" = none)
 new_num_classes: null       # set only when changing classifier output size
 
 # ==========================
@@ -80,10 +80,10 @@ wavlm_folder: !ref <save_folder>/wavlm_checkpoint
 # ==========================
 # The target distribution for soft labels is produced by `_get_cls_targets()` using `dist_mode`.
 
-dist_mode: hard            # hard | primary | secondary | merged
+dist_mode: merged            # hard | primary | secondary | merged
 soft_temp: 1.0
 
-json_fold_dir: !ref <json_root>/<dist_mode>_full9
+json_fold_dir: !ref <json_root>/merged_full9
 train_annotation: !ref <json_fold_dir>/train.json
 valid_annotation: !ref <json_fold_dir>/valid.json
 test_annotation:  !ref <json_fold_dir>/test.json
@@ -132,27 +132,14 @@ augmentation_scheduler:
       allow_combinations: true
 
 # ==========================
-#   MIXUP / CUTMIX (disabled)
-# ==========================
-mixup_enabled: false
-mixup_alpha: 0.4
-mixup_p: 0.7
-mixup_per_smp: false
-
-cutmix_enabled: false
-cutmix_alpha: 0.4
-cutmix_p: 0.5
-cutmix_per_smp: false
-
-# ==========================
 #   CHECKPOINT POLICY
 # ==========================
-checkpoint_metric: macro_f1   # model selection metric
+checkpoint_metric: kld   # model selection metric
 
 early_stopping:
   enabled: true
-  metric: macro_f1
-  mode: max
+  metric: kld
+  mode: min
   patience: 4
   min_delta: 0.001
 
@@ -166,10 +153,10 @@ emo_classes: ["neu","hap","ang","sad","fear","disgust","contempt","surprise","ot
 #   CATEGORICAL LOSS CONFIG
 # ==========================
 cat_loss:
-  type: cbce          # ce | cbce | kld | jsd
+  type: kld          # ce | cbce | kld | jsd
 
 cbce:
-  enabled: true          # toggled automatically if cat_loss=cbce
+  enabled: false          # toggled automatically if cat_loss=cbce
   beta: 0.9999            # effective number smoothing
   reduction: mean
   class_counts:
@@ -184,7 +171,7 @@ cbce:
     surprise: 8001
 
 kld_weighting:
-  enabled: true
+  enabled: false
   mode: class_counts
   class_counts:
     neu: 50708
@@ -207,7 +194,7 @@ label_scheduler: null
 
 # VAD head config
 out_n_neurons: 6
-vad_target_scale: "1_7"
+vad_target_scale: "neg1_1"   # neg1_1 | zscore | 1_7
 vad_dim_weights: [1.4, 1.0, 1.0]
 
 # SmoothL1Loss beta used in compute_objectives()
@@ -228,10 +215,10 @@ logvar_clip_max: 10.0
 # ==========================
 entropy_curriculum:
   enabled: false
-  mode: filter        # filter | weight
-  warmup_epochs: 5      # Make warmup 4–6 epochs so the head stabilizes before you filter.
+  mode: filter            # filter | weight
+  warmup_epochs: 5        # Make warmup 4–6 epochs so the head stabilizes before you filter.
   ramp_epochs: 6
-  start_thr: 0.50       # Rule: you want at least half the data when curriculum starts.
+  start_thr: 0.50         # Rule: you want at least half the data when curriculum starts.
   end_thr: 0.95
   alpha_start: 2.0
   alpha_end: 0.0
@@ -245,12 +232,12 @@ entropy_curriculum:
 #   alpha_end: 0.5-1.0
 #   min_weight: 0.3-0.5
 
-ambiguity_signal_key: emo_entropy_norm_merged   # or emo_margin, ambiguity_signal, emo_maxprob
+ambiguity_signal_key: emo_entropy_norm_merged   # options: emo_margin, ambiguity_signal, emo_maxprob
 
 # ==========================
 #   TRAINING
 # ==========================
-number_of_epochs: 18
+number_of_epochs: 20
 batch_size: 8
 grad_accum_steps: 4
 
@@ -292,7 +279,7 @@ test_dataloader_options:
 # TC-GRU head config
 pretrained_model: wavlm
 use_tc_gru_head: true
-ssl_hidden_dim: 768   # wavlm-base hidden size; set correctly
+ssl_hidden_dim: 768               # wavlm-base hidden size; set correctly
 tc_gru_conv_channels: 256
 tc_gru_conv_kernel: 3
 tc_gru_gru_hidden: 256
@@ -310,11 +297,6 @@ attn_hidden_dim: 256
 attn_dropout: 0.1
 
 pooled_dim: !ref <tc_gru_emb_dim>
-# pooled_dim: !ref <ssl_hidden_dim>   # wavlm-base => 768
-
-# NOTE:
-# - When `use_tc_gru_head: true`, the head output embedding dim is `tc_gru_emb_dim` (256).
-# - `pooled_dim` MUST match that output and MUST be the input size of cat_mlp/vad_mlp.
 
 # --- Categorical head (Module) ---
 cat_proj: !new:speechbrain.nnet.linear.Linear
