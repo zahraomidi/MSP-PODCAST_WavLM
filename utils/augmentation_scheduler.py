@@ -76,17 +76,7 @@ class AugmentationScheduler:
 
             effective_cfg[aug_name] = cfg
 
-        # Optional debug logging
-        if phase is not None:
-            print(f"[AUG-SCHED][Epoch {epoch}] phase={phase.get('name')} scale={scale} allowed={allowed} allow_combo={allow_combo}")
-            print(f"[AUG-SCHED][Epoch {epoch}] effective_cfg={effective_cfg}")
-
         if return_phase_info:
             return effective_cfg, allowed, allow_combo, phase.get("name", None), scale
-
-        # Optional debug logging
-        if phase is not None:
-            print(f"[AUG-SCHED][Epoch {epoch}] phase={phase.get('name')} scale={scale} allowed={allowed} allow_combo={allow_combo}")
-            print(f"[AUG-SCHED][Epoch {epoch}] effective_cfg={effective_cfg}")
 
         return effective_cfg, allowed, allow_combo
