@@ -81,7 +81,7 @@ def dataio_prep(hparams):
         "contempt": "contempt", "scorn": "contempt",
         "surprise": "surprise", "surprised": "surprise",
     }
-    ORDERED_CLASSES = ["neu", "hap", "sad", "ang", "fear", "disgust", "contempt", "surprise", "other"]
+    ORDERED_CLASSES = ["neu", "hap", "ang", "sad", "fear", "disgust", "contempt", "surprise", "other"]
 
     def _dist_to_vec(dist, lab2ind, C):
         vec = torch.zeros(C, dtype=torch.float32)
@@ -289,7 +289,7 @@ def dataio_prep(hparams):
                 return torch.from_numpy(audio)
             except Exception as e_cli:
                 raise RuntimeError(
-                    f"❌ COMPLETE FAILURE loading {wav}: ffmpeg-python={e_ffpy}; ffmpeg-cli={e_cli}"
+                    f"Failed to load audio file {wav}: ffmpeg-python={e_ffpy}; ffmpeg-cli={e_cli}"
                 )
         
     vad_mode = hparams.get("vad_target_scale", "neg1_1")
