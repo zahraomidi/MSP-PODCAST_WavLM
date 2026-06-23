@@ -14,6 +14,14 @@ from sklearn.metrics import f1_score
 from utils.soft_label_utils import one_hot
 from utils.model_utils import concordance_cc, _to_float_tensor, _to_long_tensor, save_model_info, export_test_predictions
 from utils.unfreeze_state import UnfreezeState, _save_unfreeze_state, _load_unfreeze_state
+from utils.entropy_curriculum import (
+    EntropyCurriculumState,
+    _entropy_curriculum_policy,
+    _get_entropy_bin_edges,
+    _load_curriculum_state,
+    _save_curriculum_state,
+    _summarize_entropy_weight_epoch,
+)
 from utils.metric_utils import ccc, rmse, cat_metrics 
 from utils.metric_utils import (
     compute_cls_extra_metrics,
@@ -40,61 +48,6 @@ from utils.run_logging import (
     maybe_log_loss_schedule_event,
     write_run_config,
 )
-
-# Minimal persisted scaffold for entropy curriculum recovery.
-# This is intentionally no-op when curriculum is disabled.
-class CurriculumState:
-    def __init__(
-        self,
-        enabled: bool = False,
-        mode: str = "none",
-        phase: str = "disabled",
-        last_epoch: int = -1,
-        last_threshold=None,
-        last_alpha=None,
-        last_min_weight=None,
-    ):
-        self.enabled = bool(enabled)
-        self.mode = str(mode)
-        self.phase = str(phase)
-        self.last_epoch = int(last_epoch)
-        self.last_threshold = last_threshold
-        self.last_alpha = last_alpha
-        self.last_min_weight = last_min_weight
-        self._restored_from_ckpt = False
-
-    def state_dict(self):
-        return {
-            "enabled": bool(self.enabled),
-            "mode": str(self.mode),
-            "phase": str(self.phase),
-            "last_epoch": int(self.last_epoch),
-            "last_threshold": self.last_threshold,
-            "last_alpha": self.last_alpha,
-            "last_min_weight": self.last_min_weight,
-        }
-
-    def load_state_dict(self, state):
-        self.enabled = bool(state.get("enabled", False))
-        self.mode = str(state.get("mode", "none"))
-        self.phase = str(state.get("phase", "disabled"))
-        self.last_epoch = int(state.get("last_epoch", -1))
-        self.last_threshold = state.get("last_threshold", None)
-        self.last_alpha = state.get("last_alpha", None)
-        self.last_min_weight = state.get("last_min_weight", None)
-        self._restored_from_ckpt = True
-
-
-def _save_curriculum_state(obj, path):
-    """Save CurriculumState as a plain dict for SpeechBrain checkpoints."""
-    torch.save(obj.state_dict(), path)
-
-
-def _load_curriculum_state(obj, path, end_of_epoch):
-    """Restore CurriculumState from SpeechBrain checkpoint payload."""
-    state = torch.load(path, map_location="cpu")
-    obj.load_state_dict(state)
-
 
 def _normalize_metric_name(metric_name):
     """Normalize configurable metric names to a stable internal form."""
@@ -388,7 +341,7 @@ class SerBrain(sb.Brain):
             ecfg = _hp_get(self.hparams, "entropy_curriculum", {}) or {}
             ecfg_enabled = bool(ecfg.get("enabled", False)) if isinstance(ecfg, dict) else bool(getattr(ecfg, "enabled", False))
             ecfg_mode = str(ecfg.get("mode", "none")).lower() if isinstance(ecfg, dict) else str(getattr(ecfg, "mode", "none")).lower()
-            self.curriculum_state = CurriculumState(
+            self.curriculum_state = EntropyCurriculumState(
                 enabled=ecfg_enabled,
                 mode=ecfg_mode,
                 phase=("active" if ecfg_enabled else "disabled"),
@@ -1051,21 +1004,8 @@ class SerBrain(sb.Brain):
 
     def _get_entropy_bin_edges(self):
         """Return 4 monotonic edges for low/mid/high entropy bins."""
-        default = [0.0, 1.0 / 3.0, 2.0 / 3.0, 1.0]
-        raw = getattr(self.hparams, "entropy_metric_bin_edges", default)
-        try:
-            edges = [float(x) for x in raw]
-            if len(edges) != 4:
-                return default
-            if not np.all(np.isfinite(edges)):
-                return default
-            if any(edges[i] > edges[i + 1] for i in range(3)):
-                return default
-            edges[0] = 0.0
-            edges[-1] = 1.0
-            return edges
-        except Exception:
-            return default
+        raw = getattr(self.hparams, "entropy_metric_bin_edges", None)
+        return _get_entropy_bin_edges(raw)
 
     def _extract_eval_label_entropy_norm(self, batch):
         """Per-utterance label entropy in [0,1] for VALID/TEST stratified metrics.
@@ -1139,147 +1079,16 @@ class SerBrain(sb.Brain):
 
     
     def _entropy_curriculum_policy(self, epoch: int):
-        """Return (mode, threshold, alpha, min_w).
-
-        Schedules are controlled by hparams.entropy_curriculum:
-
-        Curriculum 1 (filter):
-          enabled: true
-          mode: filter
-          quantile_schedule: [0.5, 0.75, 1.0]   # optional staged quantile inclusion
-          schedule_epochs: [0, 4, 8]            # optional stage start epochs
-          warmup_epochs: 1
-          ramp_epochs: 6
-          start_thr: 0.20
-          end_thr: 0.95
-
-        Curriculum 2 (filter_rev):
-          enabled: true
-          mode: filter_rev
-          quantile_schedule: [0.5, 0.75, 1.0]
-          schedule_epochs: [0, 4, 8]
-          warmup_epochs: 1
-          ramp_epochs: 6
-          start_thr: 0.20
-          end_thr: 0.95
-
-        Curriculum 3 (weight):
-          enabled: true
-          mode: weight
-          warmup_epochs: 1
-          ramp_epochs: 6
-          alpha_start: 2.0
-          alpha_end: 0.0
-          min_weight: 0.15
-
-        Curriculum 4 (weight_rev):
-          enabled: true
-          mode: weight_rev
-          warmup_epochs: 1
-          ramp_epochs: 6
-          alpha_start: 2.0
-          alpha_end: 0.0
-          min_weight: 0.15
-
-        Notes:
-          - entropy inputs should be normalized to [0,1] (emo_entropy_norm).
-          - warmup_epochs: curriculum is fully disabled for the first N epochs.
-        """
-        cfg = getattr(self, "entropy_curriculum", {}) or {}
-        if not bool(cfg.get("enabled", False)):
-            return "none", None, None, None
-
-        mode = str(cfg.get("mode", "none")).lower()
-        warmup = max(0, int(cfg.get("warmup_epochs", 0)))
-        ramp = max(0, int(cfg.get("ramp_epochs", 0)))
-
-        # Fully disable curriculum during warmup epochs.
-        if epoch is not None and int(epoch) <= warmup:
-            return "none", None, None, None
-
-        if epoch is None:
-            t = 1.0
-        elif ramp <= 1:
-            t = 1.0
-        else:
-            # First post-warmup epoch starts exactly at start_thr / alpha_start.
-            e = max(0, int(epoch) - warmup - 1)
-            t = min(1.0, max(0.0, e / float(ramp - 1)))
-
-        if mode in {"filter", "filter_rev"}:
-            q_sched = cfg.get("quantile_schedule", None)
-            e_sched = cfg.get("schedule_epochs", None)
-            if (
-                isinstance(q_sched, (list, tuple))
-                and isinstance(e_sched, (list, tuple))
-                and len(q_sched) > 0
-                and len(q_sched) == len(e_sched)
-            ):
-                cur_epoch = 0 if epoch is None else int(epoch)
-                stage_idx = 0
-                for i, e0 in enumerate(e_sched):
-                    if cur_epoch >= int(e0):
-                        stage_idx = i
-                q = float(q_sched[min(stage_idx, len(q_sched) - 1)])
-                q = min(1.0, max(0.0, q))
-                return mode, float(q), None, None
-
-            start_thr = float(cfg.get("start_thr", 0.25))
-            end_thr = float(cfg.get("end_thr", 1.0))
-            thr = start_thr + t * (end_thr - start_thr)
-            return mode, float(thr), None, None
-
-        if mode in {"weight", "weight_rev"}:
-            a0 = float(cfg.get("alpha_start", 2.0))
-            a1 = float(cfg.get("alpha_end", 0.0))
-            alpha = a0 + t * (a1 - a0)
-            min_w = float(cfg.get("min_weight", 0.10))
-            return mode, None, float(alpha), float(min_w)
-
-        return "none", None, None, None
+        """Return the active curriculum mode, threshold, alpha, and minimum weight."""
+        return _entropy_curriculum_policy(self.entropy_curriculum, epoch)
 
     def _summarize_entropy_weight_epoch(self):
         """Return (mean, min, max, p10, p50, p90, frac_at_min_weight) for TRAIN weights."""
-        vals = getattr(self, "_entropy_weight_values", None)
-        n_min = int(getattr(self, "_entropy_weight_min_count", 0) or 0)
-        n_tot = int(getattr(self, "_entropy_weight_total_count", 0) or 0)
-        frac_at_min = (float(n_min) / float(n_tot)) if n_tot > 0 else None
-        if not vals:
-            return None, None, None, None, None, None, frac_at_min
-
-        try:
-            w = torch.cat(vals, dim=0).to(dtype=torch.float32).view(-1)
-        except Exception:
-            return None, None, None, None, None, None, frac_at_min
-
-        if int(w.numel()) == 0:
-            return None, None, None, None, None, None, frac_at_min
-
-        try:
-            q = torch.quantile(
-                w,
-                torch.tensor([0.10, 0.50, 0.90], dtype=w.dtype, device=w.device),
-            )
-            return (
-                float(w.mean().item()),
-                float(w.min().item()),
-                float(w.max().item()),
-                float(q[0].item()),
-                float(q[1].item()),
-                float(q[2].item()),
-                frac_at_min,
-            )
-        except Exception:
-            arr = w.detach().cpu().numpy()
-            return (
-                float(arr.mean()),
-                float(arr.min()),
-                float(arr.max()),
-                float(np.percentile(arr, 10)),
-                float(np.percentile(arr, 50)),
-                float(np.percentile(arr, 90)),
-                frac_at_min,
-            )
+        return _summarize_entropy_weight_epoch(
+            getattr(self, "_entropy_weight_values", None),
+            getattr(self, "_entropy_weight_min_count", 0),
+            getattr(self, "_entropy_weight_total_count", 0),
+        )
 
     def _log_entropy_curriculum_epoch_debug(self, epoch):
         """Emit an epoch-level curriculum diagnostic line."""
