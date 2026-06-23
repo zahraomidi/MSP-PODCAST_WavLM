@@ -14,11 +14,8 @@ from sklearn.metrics import f1_score, recall_score, precision_score
 from utils.augment import WaveformAugmenter
 from utils.soft_label_utils import apply_mixup, apply_cutmix
 from utils.soft_label_utils import one_hot
-from utils.accuracy import AccuracyStats
-from utils.freeze_utils import apply_unfreeze_schedule, _save_unfreeze_state, _load_unfreeze_state 
 from utils.model_utils import concordance_cc, _to_float_tensor, _to_long_tensor, save_model_info, export_test_predictions
-from utils.unfreeze_state import UnfreezeState
-from utils.attention_pooling import MultiHeadSelfAttentionPooling
+from utils.unfreeze_state import UnfreezeState, _save_unfreeze_state, _load_unfreeze_state
 from utils.metric_utils import ccc, rmse, cat_metrics 
 from utils.metric_utils import (
     compute_cls_extra_metrics,
@@ -398,12 +395,9 @@ class SerBrain(sb.Brain):
         # --- optional paper-style TC-GRU head (replaces pooling) ---
         self._init_tc_gru_head()
 
-        # --- attention pooling over time (used only when TC-GRU head is disabled) ---
-        self._init_attention_pool()
-
         # ---- Save model architecture for inspection (AFTER all heads exist) ----
-        # NOTE: save_model_info now prints optional heads (tc_gru_head / attn_pool),
-        # so do NOT append here (avoids stale/overwritten dumps).
+        # NOTE: save_model_info prints the optional TC-GRU head, so do not append
+        # here (avoids stale/overwritten dumps).
         try:
             save_model_info(self, self.hparams.save_folder)
         except Exception as e:
@@ -412,7 +406,7 @@ class SerBrain(sb.Brain):
         # --- initial freeze: encoder off, heads on ---
         for p in self.modules["ssl_model"].parameters():
             p.requires_grad = False
-        for k in ("vad_mlp", "cat_mlp", "attn_pool", "tc_gru_head"):
+        for k in ("vad_mlp", "cat_mlp", "tc_gru_head"):
             if k in self.modules:
                 for p in self.modules[k].parameters():
                     p.requires_grad = True
@@ -459,7 +453,7 @@ class SerBrain(sb.Brain):
         # --- register recoverables ---
         if getattr(self, "checkpointer", None) is not None:
             # heads
-            for k in ("vad_mlp", "cat_mlp", "tc_gru_head", "attn_pool"):
+            for k in ("vad_mlp", "cat_mlp", "tc_gru_head"):
                 if k in self.modules:
                     self.checkpointer.add_recoverable(k, self.modules[k])
 
@@ -1102,67 +1096,6 @@ class SerBrain(sb.Brain):
             self._run_header_logged = True
 
 
-    def _init_attention_pool(self):
-        """
-        Initialize multi-head attention pooling.
-
-        Uses:
-        - hparams.ssl_hidden_dim if available
-        - otherwise infers input_dim from first Linear in vad_mlp
-
-        Controlled by flat hparams:
-        - use_attn_pooling   (bool, default: True)
-        - attn_num_heads     (int,  default: 4)
-        - attn_hidden_dim    (int,  default: None -> input_dim)
-        - attn_dropout       (float, default: 0.1)
-        - attn_temperature   (float, default: 1.0)
-        """
-        use_attn = bool(getattr(self.hparams, "use_attn_pooling", True))
-        if not use_attn:
-            self._log("[ATTN] Attention pooling disabled; using simple mean pooling.")
-            self.attn_pool = None
-            return
-
-        # Prefer explicit ssl_hidden_dim
-        in_dim = int(getattr(self.hparams, "ssl_hidden_dim", 0) or 0)
-
-        # Fallback: infer from vad_mlp
-        if in_dim <= 0:
-            vad_mlp = self.modules["vad_mlp"] if "vad_mlp" in self.modules else None
-            if isinstance(vad_mlp, nn.Sequential):
-                for layer in vad_mlp:
-                    if isinstance(layer, nn.Linear):
-                        in_dim = layer.in_features
-                        break
-
-        if in_dim <= 0:
-            self._log("[ATTN][WARN] Could not infer ssl feature dim; falling back to mean pooling.")
-            self.attn_pool = None
-            return
-
-        num_heads   = int(getattr(self.hparams, "attn_num_heads", 4))
-        hidden_dim  = getattr(self.hparams, "attn_hidden_dim", None)
-        if hidden_dim is not None:
-            hidden_dim = int(hidden_dim)
-        dropout     = float(getattr(self.hparams, "attn_dropout", 0.1))
-        temperature = float(getattr(self.hparams, "attn_temperature", 1.0))
-
-        self.attn_pool = MultiHeadSelfAttentionPooling(
-            input_dim=in_dim,
-            num_heads=num_heads,
-            hidden_dim=hidden_dim,
-            dropout=dropout,
-            temperature=temperature,
-        ).to(self.device)
-
-        # register for checkpointing
-        self.modules["attn_pool"] = self.attn_pool
-        self._log(
-            f"[ATTN] Init multi-head attention pooling: "
-            f"in_dim={in_dim}, heads={num_heads}, hidden_dim={hidden_dim}, "
-            f"dropout={dropout}, tau={temperature:.3f}"
-        )
-
     def _init_augmenter(self):
         """Initialize waveform augmentation pipeline."""
         aug_cfg = getattr(self.hparams, "augmentation", None)
@@ -1749,22 +1682,8 @@ class SerBrain(sb.Brain):
         # ----- Pool / Head over time -----
         if getattr(self, "use_tc_gru_head", False) and getattr(self, "tc_gru_head", None) is not None:
             pooled = self.tc_gru_head(framewise, lens)  # [B, emb]
-        elif hasattr(self, "attn_pool") and self.attn_pool is not None:
-            pooled = self.attn_pool(framewise, lens)    # [B, D]
         else:
             pooled = framewise.mean(dim=1)              # [B, D]
-
-        # --- ATTENTION POOLING SANITY CHECK ---
-        if self.attn_pool is not None:
-            if pooled is None:
-                raise RuntimeError("ATTN POOLING FAILURE: pooled returned None.")
-            if not torch.isfinite(pooled).all():
-                raise RuntimeError("ATTN POOLING FAILURE: pooled contains NaN/Inf values.")
-            if pooled.dim() != 2:
-                raise RuntimeError(f"ATTN POOLING FAILURE: pooled has invalid shape {pooled.shape}, expected [B, D].")
-            # Optional debug logging
-            if getattr(self.hparams, "debug_attn_pool", False):
-                self._log(f"[ATTN-POOL] pooled shape={tuple(pooled.shape)}, min={pooled.min().item():.4f}, max={pooled.max().item():.4f}")
 
         # --- TC-GRU SANITY CHECK ---
         if getattr(self, "use_tc_gru_head", False) and getattr(self, "tc_gru_head", None) is not None:

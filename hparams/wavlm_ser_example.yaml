@@ -285,12 +285,6 @@ tc_gru_bidirectional: false
 
 hidden_size: 256
 
-# ===== Attentive Pooling =====
-use_attn_pooling: false
-attn_num_heads: 4
-attn_hidden_dim: 256
-attn_dropout: 0.1
-
 pooled_dim: !ref <tc_gru_emb_dim>
 
 # --- Categorical head (Module) ---

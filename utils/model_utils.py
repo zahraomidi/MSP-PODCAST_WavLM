@@ -224,7 +224,7 @@ def save_model_info(brain, save_dir=None):
         if ssl_obj is None and isinstance(modules, dict):
             ssl_obj = modules.get("ssl_model", None)
 
-        # Try to resolve optional modules that may live either on `brain` or in `brain.modules`
+        # Resolve the optional TC-GRU module from `brain` or `brain.modules`.
         tcgru_obj = getattr(brain, "tc_gru_head", None)
         if tcgru_obj is None:
             tcgru_obj = getattr(brain, "tcgru_head", None)
@@ -235,10 +235,6 @@ def save_model_info(brain, save_dir=None):
                 or modules.get("tc_gru")
                 or modules.get("tcgru")
             )
-
-        attn_pool_obj = getattr(brain, "attn_pool", None)
-        if attn_pool_obj is None and isinstance(modules, dict):
-            attn_pool_obj = modules.get("attn_pool", None)
 
         with open(arch_path, "w") as f:
             # ---- versions / environment ----
@@ -291,7 +287,6 @@ def save_model_info(brain, save_dir=None):
             # ---- modules ----
             _safe_write(f, "SSL MODEL", ssl_obj)
             _safe_write(f, "TCGRU HEAD", tcgru_obj)
-            _safe_write(f, "ATTENTION POOL", attn_pool_obj)
 
             if isinstance(modules, dict):
                 _safe_write(f, "VAD MLP", modules.get("vad_mlp", None))

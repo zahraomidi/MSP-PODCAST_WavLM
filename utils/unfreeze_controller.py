@@ -224,7 +224,7 @@ def _apply_gradual_unfreeze(brain, epoch: int):
 def _maybe_update_unfreeze(brain, epoch: int):
     """Compatibility wrapper for unfreezing logic.
 
-    Some older code paths call `_maybe_update_unfreeze(epoch)`.
+    This helper accepts either a brain object or an epoch argument for backward-compatible calls.
     This method delegates to the configured unfreezing strategy:
         - if `gradual_unfreeze` is enabled, use `_apply_gradual_unfreeze(epoch)`.
         - otherwise, intentionally no-op to avoid undefined legacy calls.
