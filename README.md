@@ -4,7 +4,7 @@ This repository contains the implementation for the paper:
 
 **Learning from Annotation Uncertainty: Entropy-Aware Curriculum for Speech Emotion Recognition**
 
-The code supports speech emotion recognition (SER) experiments using WavLM-based models, distribution-based supervision, and entropy-aware analysis of annotation uncertainty on MSP-Podcast 2.0.
+The code supports speech emotion recognition (SER) experiments using a WavLM-based model, merged distribution-based supervision, and entropy-aware curriculum learning on MSP-Podcast 2.0.
 
 ## Overview
 
@@ -12,12 +12,13 @@ Most SER systems train on hard consensus labels, collapsing annotator disagreeme
 
 The implementation includes:
 
-- WavLM-based SER training
-- hard-label and distribution-based supervision
-- primary and merged annotation-distribution targets
+- WavLM-based SER training with a TC-GRU head
+- merged primary-secondary annotation-distribution targets
+- KLD-based distributional supervision
 - entropy-aware curriculum learning
 - multitask categorical emotion and VAD modeling
 - evaluation utilities for categorical and distributional metrics
+- optional hard-label and primary-distribution manifest preparation for ablation studies
 
 ## Repository structure
 
