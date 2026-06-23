@@ -9,7 +9,7 @@ import torch.nn as nn
 from pathlib import Path
 import torch.optim as _optim
 from speechbrain.utils.checkpoints import Checkpointer
-from sklearn.metrics import f1_score, recall_score, precision_score
+from sklearn.metrics import f1_score
 
 from utils.soft_label_utils import one_hot
 from utils.model_utils import concordance_cc, _to_float_tensor, _to_long_tensor, save_model_info, export_test_predictions
@@ -23,10 +23,7 @@ from utils.metric_utils import (
     distribution_stats,
     ece_bin_sums_from_logp,
 )
-# from utils.subsampler import BalancedSubsetPerEpochSampler
-
 from dataio_msp_podcast import dataio_prep
-
 from utils.utils import set_global_seed, _hp_get
 from utils.model_utils import get_ssl_model, TCGRUHead
 from utils.unfreeze_controller import (
