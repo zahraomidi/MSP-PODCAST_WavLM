@@ -3,18 +3,17 @@
 """
 metric_utils.py
 ----------------------------------
-Metric utilities for regression (VAD), categorical, and binary heads.
+Metric utilities for VAD regression and categorical speech emotion recognition.
 
 Provides:
  - Concordance correlation coefficient (CCC)
  - Root mean square error (RMSE)
- - Unweighted & weighted accuracy for categorical heads
- - Precision / Recall / F1 for binary head
- - Confusion-matrix–based per-class stats
+ - Categorical accuracy, unweighted accuracy, precision, recall, and F1
+ - Top-k accuracy
+ - Calibration and expected calibration error (ECE)
+ - Distribution statistics
 """
 
-import os
-import json
 import math
 import numpy as np
 import torch
@@ -101,43 +100,6 @@ def cat_metrics(
     return dict(acc=acc, ua=ua, per_class_acc=per_class_acc, confmat=cm)
 
 
-# ======================================================
-# ---------- CONFUSION-MATRIX DERIVED ----------
-# ======================================================
-
-@torch.no_grad()
-def cls_metrics_from_conf(conf: torch.Tensor) -> dict:
-    """
-    Compute precision/recall/F1 per class and aggregate metrics from confusion matrix.
-
-    Args:
-        conf: [C,C] tensor (rows = true, cols = predicted)
-    Returns:
-        dict of macro, weighted, and per-class metrics
-    """
-    conf = conf.to(torch.float32)
-    tp = torch.diag(conf)
-    fp = conf.sum(dim=0) - tp
-    fn = conf.sum(dim=1) - tp
-    support = conf.sum(dim=1).clamp_min(1.0)
-
-    precision = tp / (tp + fp).clamp_min(1e-12)
-    recall = tp / (tp + fn).clamp_min(1e-12)
-    f1 = 2 * precision * recall / (precision + recall).clamp_min(1e-12)
-
-    macro_f1 = f1.mean()
-    weighted_f1 = (f1 * (support / support.sum())).sum()
-    micro_acc = tp.sum() / conf.sum().clamp_min(1e-12)
-
-    return {
-        "precision_per_class": precision.tolist(),
-        "recall_per_class": recall.tolist(),
-        "f1_per_class": f1.tolist(),
-        "f1_macro": float(macro_f1.item()),
-        "f1_weighted": float(weighted_f1.item()),
-        "f1_micro": float(micro_acc.item()),  # ≈ accuracy for single-label
-    }
-
 def topk_accuracy(logp: torch.Tensor, y: torch.Tensor, ks=(1,2,3)):
     """
     logp: [B, C] log-probs
@@ -154,18 +116,6 @@ def topk_accuracy(logp: torch.Tensor, y: torch.Tensor, ks=(1,2,3)):
             acc[f"top{k}_acc"] = correct.float().mean().item()
         return acc
     
-
-def pretty_metrics(metrics: dict, keys):
-    """Return a compact human-readable metric string."""
-    parts = []
-    for k in keys:
-        if k in metrics and metrics[k] is not None:
-            v = metrics[k]
-            if isinstance(v, float):
-                parts.append(f"{k}={v:.3f}")
-            else:
-                parts.append(f"{k}={v}")
-    return " | ".join(parts)
 
 @torch.no_grad()
 def compute_cls_extra_metrics(logp, y_true, class_names, zero_division=0) -> dict:
@@ -294,12 +244,6 @@ def ece_bin_sums_from_logp(logp: torch.Tensor, y_true: torch.Tensor, n_bins: int
     return conf_sum, acc_sum, count
 
 
-@torch.no_grad()
-def ece_from_logp(logp: torch.Tensor, y_true: torch.Tensor, n_bins: int = 10) -> float:
-    """Convenience wrapper: ECE directly from log-probs."""
-    conf_sum, acc_sum, count = ece_bin_sums_from_logp(logp, y_true, n_bins=n_bins)
-    return ece_from_bin_sums(conf_sum, acc_sum, count)
-
 # distribution_stats(dist) -> dict(mean_ent, mean_maxp, mean_margin, …)
 @torch.no_grad()
 def distribution_stats(dist: torch.Tensor, normalize: bool = True, eps: float = 1e-8) -> dict:
@@ -352,26 +296,3 @@ def distribution_stats(dist: torch.Tensor, normalize: bool = True, eps: float = 
         "mean_maxp": float(maxp.mean().item()),
         "mean_margin": float(margin.mean().item()),
     }
-
-@staticmethod
-def _macro_f1_from_cm(cm: torch.Tensor) -> float:
-    """Compute macro-F1 from a [C,C] confusion matrix (CPU int64)."""
-    if cm is None:
-        return 0.0
-    if hasattr(cm, "detach"):
-        cm = cm.detach()
-    cm = cm.to("cpu")
-
-    tp = torch.diag(cm).to(torch.float32)
-    fp = (cm.sum(dim=0).to(torch.float32) - tp).clamp_min(0.0)
-    fn = (cm.sum(dim=1).to(torch.float32) - tp).clamp_min(0.0)
-
-    denom = (2.0 * tp + fp + fn).clamp_min(1e-8)
-    f1 = (2.0 * tp) / denom
-
-    # Only average classes that actually appear in y_true (row sum > 0)
-    support = cm.sum(dim=1).to(torch.float32)
-    mask = support > 0
-    if mask.any():
-        return float(f1[mask].mean().item())
-    return float(f1.mean().item())
