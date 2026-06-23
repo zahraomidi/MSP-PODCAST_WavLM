@@ -25,7 +25,6 @@ The implementation includes:
 - `train_ser.py` — main training script
 - `dataio_msp_podcast.py` — MSP-Podcast data loading utilities
 - `prepare_msp_podcast.py` — MSP-Podcast preparation utilities
-- `validate_config.py` — configuration validation
 - `hparams/wavlm_ser_example.yaml` — example WavLM SER training configuration
 - `utils/` — model, augmentation, logging, metric, and training utilities
 

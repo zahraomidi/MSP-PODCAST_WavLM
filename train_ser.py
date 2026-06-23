@@ -28,7 +28,6 @@ from utils.metric_utils import (
 # from utils.subsampler import BalancedSubsetPerEpochSampler
 
 from utils.augmentation_scheduler import AugmentationScheduler
-from validate_config import validate_hparams
 from dataio_msp_podcast import dataio_prep
 
 from utils.utils import set_global_seed, _hp_get
@@ -3653,8 +3652,6 @@ if __name__ == "__main__":
             hparams["label_encoder"] = sb.dataio.encoder.CategoricalEncoder()
         except Exception:
             hparams["label_encoder"] = None
-
-    # validate_hparams(hparams)
 
     # Make run_opts visible to model initialization utilities.
     hparams["run_opts"] = run_opts
