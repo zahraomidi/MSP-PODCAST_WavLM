@@ -11,8 +11,6 @@ import torch.optim as _optim
 from speechbrain.utils.checkpoints import Checkpointer
 from sklearn.metrics import f1_score, recall_score, precision_score
 
-from utils.augment import WaveformAugmenter
-from utils.soft_label_utils import apply_mixup, apply_cutmix
 from utils.soft_label_utils import one_hot
 from utils.model_utils import concordance_cc, _to_float_tensor, _to_long_tensor, save_model_info, export_test_predictions
 from utils.unfreeze_state import UnfreezeState, _save_unfreeze_state, _load_unfreeze_state
@@ -27,7 +25,6 @@ from utils.metric_utils import (
 )
 # from utils.subsampler import BalancedSubsetPerEpochSampler
 
-from utils.augmentation_scheduler import AugmentationScheduler
 from dataio_msp_podcast import dataio_prep
 
 from utils.utils import set_global_seed, _hp_get
@@ -341,39 +338,6 @@ class SerBrain(sb.Brain):
             if isinstance(cfg, dict):
                 return cfg.get(key, default)
             return getattr(cfg, key, default)
-
-        # ---------------------------------------
-        # Build Augmentation + Scheduler
-        # ---------------------------------------
-        # Base augmentation config from YAML
-        self.base_aug_cfg = self.hparams.augmentation
-
-        # Scheduler config from YAML
-        sched_cfg = getattr(self.hparams, "augmentation_scheduler", {})
-
-        # Initialize scheduler
-        self.aug_scheduler = AugmentationScheduler(
-            scheduler_cfg=sched_cfg,
-            base_aug_cfg=self.base_aug_cfg
-        )
-
-        # Initialize augmenter from full hparams so it can resolve top-level
-        # paths like `rir_folder` (not present inside augmentation sub-dict).
-        self.augment = WaveformAugmenter(self.hparams, device=self.device)
-
-        # Log initial augmentation summary (pre-scheduler)
-        any_aug = any(
-            (self.base_aug_cfg.get(k, {}).get("p", 0) or 0) > 0
-            for k in self.base_aug_cfg
-        )
-        # Keep augmentation summary out of SpeechBrain train_logger (too verbose on console).
-        self._debug(
-            f"[AUG-INIT]  any={any_aug} "
-            f"noise_p={self.base_aug_cfg.get('noise', {}).get('p', 0)} "
-            f"time_mask_p={self.base_aug_cfg.get('time_mask', {}).get('p', 0)} "
-            f"rir_p={self.base_aug_cfg.get('rir', {}).get('p', 0)} "
-            f"params={self.base_aug_cfg}"
-        )
 
         # --- SSL model init ---
         existing_ssl = self.modules["ssl_model"] if "ssl_model" in self.modules else None
@@ -967,24 +931,7 @@ class SerBrain(sb.Brain):
             self._kld_class_weights = None
             if kldw_cfg is not None:
                 self._log(f"[LOSS][WARN] Failed to build Weighted-KLD class weights; using vanilla KLD: {e}", tag="LOSS")
-        self.mixup_enabled = bool(getattr(self.hparams, "mixup_enabled", False))
-        self.mixup_alpha   = float(getattr(self.hparams, "mixup_alpha", 0.4))
-        self.mixup_p       = float(getattr(self.hparams, "mixup_p", 0.0))
-        self.mixup_per_smp = bool(getattr(self.hparams, "mixup_per_smp", True))
-
-        self.cutmix_enabled = bool(getattr(self.hparams, "cutmix_enabled", False))
-        self.cutmix_alpha   = float(getattr(self.hparams, "cutmix_alpha", 0.4))
-        self.cutmix_p       = float(getattr(self.hparams, "cutmix_p", 0.0))
-        self.cutmix_per_smp = bool(getattr(self.hparams, "cutmix_per_smp", True))
-
-        # Experiments currently exclude MixUp/CutMix; keep toggles off by default unless explicitly re-enabled.
-        if not bool(getattr(self.hparams, "enable_mix_aug", False)):
-            self.mixup_enabled = False
-            self.cutmix_enabled = False
-
         self.frame_w = float(getattr(self.hparams, "frame_loss_weight", 0.0))
-        self._cat_soft_targets = None  # holds [B,C] for current TRAIN batch if mixup/cutmix produced soft labels
-        # self._init_augmenter()  
 
         self.current_label_mode = str(_hp_get(self.hparams, "dist_mode", "merged")).lower()
 
@@ -1095,33 +1042,9 @@ class SerBrain(sb.Brain):
             self._run_header_logged = True
 
 
-    def _init_augmenter(self):
-        """Initialize waveform augmentation pipeline."""
-        aug_cfg = getattr(self.hparams, "augmentation", None)
-        if not aug_cfg:
-            self._log("[AUG] No augmentation config found; skipping.")
-            self.augment = None
-            return
-
-        try:
-            from utils.augment import WaveformAugmenter
-            self.augment = WaveformAugmenter(
-                self.hparams,
-                device=self.device,
-                dtype=torch.float32,
-            )
-            self._log("[AUG] WaveformAugmenter initialized successfully.")
-        except Exception as e:
-            self._log(f"[AUG][WARN] Failed to initialize augmentation: {e}")
-            self.augment = None
-
     def _build_targets(self, y_idx: torch.Tensor) -> torch.Tensor:
         """Return [B,C] one-hot targets (synthetic target smoothing removed)."""
         return one_hot(y_idx, self.num_classes)
-        
-    def _build_cutmix_targets(self, y, y_perm, lam_eff):
-        ta = self._build_targets(y); tb = self._build_targets(y_perm)
-        return lam_eff.view(-1,1) * ta + (1.0 - lam_eff.view(-1,1)) * tb
 
     @staticmethod
     def _normalize_distribution(dist: torch.Tensor) -> torch.Tensor:
@@ -1179,28 +1102,23 @@ class SerBrain(sb.Brain):
         Returns the soft categorical targets to supervise the emotion head.
 
         Priority order:
-        1. Augmentation-created mixtures (MixUp / CutMix) stored in _cat_soft_targets
-        2. Configured `dist_mode`:
+        1. Configured `dist_mode`:
             - "hard"      -> one-hot from y_idx (no emo_vec)
             - otherwise   -> dataset-provided emo_vec distributions
-        3. Fallback synthetic one-hot targets from _build_targets().
+        2. Fallback synthetic one-hot targets from _build_targets().
         """
-        # 1) If MixUp / CutMix produced soft labels for this TRAIN batch, use them.
-        if stage == sb.Stage.TRAIN and getattr(self, "_cat_soft_targets", None) is not None:
-            return self._normalize_distribution(self._cat_soft_targets.to(self.device))
-
         # Determine current label mode from the configured dist_mode.
         label_mode = getattr(self, "current_label_mode", None)
         if label_mode is None:
             label_mode = getattr(self.hparams, "dist_mode", "merged")
         label_mode = str(label_mode).lower()
 
-        # 2) Hard mode: ignore emo_vec and use strict one-hot from y_idx.
+        # Hard mode: ignore emo_vec and use strict one-hot from y_idx.
         if label_mode == "hard":
             hard_vec = one_hot(y_idx, self.num_classes).to(self.device)
             return self._normalize_distribution(hard_vec)
 
-        # 3) Soft modes: rely on emo_vec (primary / secondary / merged selected by dist_pipeline)
+        # Soft modes: rely on emo_vec (primary / secondary / merged selected by dist_pipeline)
         emo_vec = getattr(batch, "emo_vec", None)
         if emo_vec is not None:
             vec = getattr(emo_vec, "data", emo_vec)
@@ -1219,7 +1137,7 @@ class SerBrain(sb.Brain):
                     vec = torch.softmax(logits / temp, dim=-1)
                 return vec
 
-        # 4) Fallback: synthetic targets from loss config (_build_targets).
+        # Fallback: synthetic targets from loss config (_build_targets).
         return self._build_targets(y_idx).to(self.device)
 
     
@@ -1586,71 +1504,6 @@ class SerBrain(sb.Brain):
 
         # First-batch label sanity checks (crash-fast; prevents silent fallback).
         self._maybe_assert_labels_first_batch(batch, stage)
-
-        # ----- Augmentation (train only) -----
-        if stage == sb.Stage.TRAIN:
-            # Reset per-batch soft targets
-            self._cat_soft_targets = None
-
-            # Waveform-level augmentation (noise, RIR, etc.)
-            if hasattr(self, "augment") and self.augment is not None:
-                wavs = self.augment(wavs, lens=lens, training=True)
-
-            # Build base soft targets from the current label mode (hard / primary / merged).
-            # These are what MixUp / CutMix will mix, so they always respect the configured label mode.
-            y_idx_raw = _to_long_tensor(batch.y_idx, self.device)
-
-            # NOTE: _get_cls_targets will ignore self._cat_soft_targets when it is None
-            # and will return either one-hot (hard) or emo_vec-based soft distributions.
-            base_soft_targets = self._get_cls_targets(batch, sb.Stage.TRAIN, y_idx_raw)
-
-            # Determine whether current label mode is hard or soft.
-            # Use the same resolution logic as `_get_cls_targets()`:
-            #   - `self.current_label_mode` mirrors hparams.dist_mode
-            #   - otherwise fall back to hparams.dist_mode (default: merged)
-            # If soft labels (primary/merged), disable MixUp and CutMix to avoid over-smoothing.
-            label_mode = getattr(self, "current_label_mode", None)
-            if label_mode is None:
-                label_mode = getattr(self.hparams, "dist_mode", "merged")
-            label_mode = str(label_mode).lower()
-            # MixUp/CutMix produce soft targets. Keep them only when the loss consumes soft targets.
-            loss_uses_soft = str(getattr(self, "cat_loss_type", "ce")).lower() in ("kld", "jsd")
-            allow_mix = (label_mode == "hard") and loss_uses_soft
-            allow_cutmix = (label_mode == "hard") and loss_uses_soft
-
-            # ---------- MixUp ----------
-            if allow_mix and getattr(self, "mixup_enabled", False) and torch.rand(1, device=self.device).item() < self.mixup_p:
-                mixed_wavs, mixed_targets, lam = apply_mixup(
-                    wavs,
-                    y_idx=y_idx_raw,
-                    C=self.num_classes,
-                    alpha=self.mixup_alpha,
-                    per_sample=self.mixup_per_smp,
-                    build_targets=None,  # already soft; let MixUp detect that
-                    soft_targets=base_soft_targets,   # [B, C] soft distributions
-                )
-                wavs = mixed_wavs
-                # Store soft label distributions for this batch
-                self._cat_soft_targets = mixed_targets.to(self.device)
-                if verbose:
-                    self._log(f"[MIXUP] Applied with alpha={self.mixup_alpha}, λ≈{lam.mean().item():.3f}")
-
-            # ---------- CutMix ----------
-            elif allow_cutmix and getattr(self, "cutmix_enabled", False) and torch.rand(1, device=self.device).item() < self.cutmix_p:
-                mixed_wavs, mixed_targets, lam_eff = apply_cutmix(
-                    wavs,
-                    lens=lens,
-                    y_idx=y_idx_raw,
-                    C=self.num_classes,
-                    alpha=self.cutmix_alpha,
-                    per_sample=self.cutmix_per_smp,
-                    build_targets=None,  # already soft; let CutMix detect that
-                    soft_targets=base_soft_targets,   # [B, C] soft distributions
-                )
-                wavs = mixed_wavs
-                self._cat_soft_targets = mixed_targets.to(self.device)
-                if verbose:
-                    self._log(f"[CUTMIX] Applied with alpha={self.cutmix_alpha}, mean λ_eff={lam_eff.mean().item():.3f}")
 
         # ----- SSL encoder -----
         # print("SSL MODEL ATTRS:", dir(self.modules["ssl_model"]))
@@ -2455,37 +2308,11 @@ class SerBrain(sb.Brain):
                     tag="ENC"
                 )
 
-            # -----------------------------
-            # Update augmentation config for this epoch
-            # -----------------------------
-            effective_cfg, allowed_augs, allow_combo, phase_name, scale = \
-                self.aug_scheduler.get_effective_aug_config(epoch, return_phase_info=True)
-
-            if hasattr(self, "augment") and self.augment is not None:
-                self.augment.update_config(effective_cfg, allow_combo)
-
-            # Flatten probabilities for readability
-            flat_probs = {f"{k}_p": float(v.get("p", 0.0)) for k, v in effective_cfg.items()}
-
-            # Debug-only logging for AugmentScheduler (not train_logger)
-            allowed_list = list(allowed_augs) if allowed_augs is not None else []
-            self._debug(
-                f"[AUG-SCHED] epoch={epoch} phase={phase_name} scale={scale:.2f} "
-                f"allowed={allowed_list} probs={flat_probs}"
-            )
-            # Human-readable scheduler summary (for console/paper/debug)
-            self._log(
-                f"Epoch {epoch} | AUG phase={phase_name} | scale={scale:.2f} | augs={allowed_list}",
-                tag="AUG",
-            )
-
-
     def fit_batch(self, batch):
         """
         Gradient accumulation version of fit_batch.
         Works with:
         - param-group optimizer (SSL vs heads)
-        - mixup/cutmix
         - frozen/partially unfrozen encoder
         - SB train loop
         """

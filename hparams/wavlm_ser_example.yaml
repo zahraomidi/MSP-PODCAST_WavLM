@@ -26,16 +26,11 @@ max_unfrozen_layers: 12
 #   DATA PATHS
 # ==========================
 # Point these to your LOCAL audio + JSONs.
-# For an 80-sample debug run, create tiny JSONs (train/valid/test) inside `json_fold_dir`.
 
 data_folder: /path/to/MSP-PODCAST2.0/Audios
 json_root: /path/to/MSP-PODCAST2.0/i26_json
-rir_folder: /path/to/RIRS_NOISES/real_rirs_isotropic_noises
 
-# Make exp_tag descriptive (used as the output folder name)
-exp_tag: wavlm_merged_kld_9cls
-
-output_folder: ./results/!ref <exp_tag>
+output_folder: ./results/wavlm_merged_kld_9cls
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
 
@@ -45,9 +40,9 @@ train_metrics_every: 100
 # ==========================
 #   RUN / CHECKPOINT CONTROL (moved from CLI)
 # ==========================
-mode: scratch              # scratch | resume | ft
-ckpt_path: ""              # path to a CKPT directory or a .ckpt file
-load_mode: backbone+heads   # backbone | backbone+heads | all
+mode: scratch                 # scratch | resume | ft
+ckpt_path: ""                 # path to a CKPT directory or a .ckpt file
+load_mode: backbone+heads     # backbone | backbone+heads | all
 
 # Re-init / freezing controls
 reset_head: false
@@ -67,13 +62,9 @@ ckpt_save_latest: true
 ckpt_num_to_keep: 3
 recover_optimizers: true
 
-# wavlm_hub: microsoft/wavlm-base
-# wavlm_folder: !ref <save_folder>/wavlm_checkpoint
-
 # Download from HuggingFace (cached under wavlm_folder)
 wavlm_hub: microsoft/wavlm-base
 wavlm_folder: !ref <save_folder>/wavlm_checkpoint
-
 
 # ==========================
 #   LABEL DISTRIBUTION MODE
@@ -91,50 +82,15 @@ test_annotation:  !ref <json_fold_dir>/test.json
 # Label encoder object (must exist for checkpointer recoverables)
 label_encoder: !new:speechbrain.dataio.encoder.CategoricalEncoder
 # ==========================
-#   AUDIO / AUGMENTATION
+#   AUDIO
 # ==========================
 sample_rate: 16000
 deterministic: true
 
-augmentation:
-  speed:      { p: 0.1, min: 0.95, max: 1.05 }
-  rir:        { p: 0.2, scale: 0.20 }
-  bandlimit:  { p: 0.3, low_hz: 150, high_hz: 6000, dry: 0.25 }
-  noise:      { p: 0.2, snr_min: 10, snr_max: 25 }
-  time_mask:  { p: 0.15, max_mask_pct: 0.05, num_masks: 2 }
-
-augmentation_scheduler:
-  enabled: true
-  phases:
-    # 1) warmup: keep aug light
-    - name: warmup
-      epoch_start: 1
-      epoch_end: 1
-      scale: 0.35
-      allowed_augs: [speed, noise]
-      allow_combinations: false
-
-    # 2) ramp: gradually increase aug strength
-    - name: ramp
-      epoch_start: 2
-      epoch_end: 6
-      scale_start: 0.45
-      scale_end: 1.00
-      allowed_augs: [speed, noise, bandlimit, time_mask]
-      allow_combinations: true
-
-    # 3) full: enable all configured augs at full strength
-    - name: full
-      epoch_start: 7
-      epoch_end: 999
-      scale: 1.00
-      allowed_augs: [speed, noise, bandlimit, time_mask, rir]
-      allow_combinations: true
-
 # ==========================
 #   CHECKPOINT POLICY
 # ==========================
-checkpoint_metric: kld   # model selection metric
+checkpoint_metric: kld          # model selection metric
 
 early_stopping:
   enabled: true
@@ -153,11 +109,11 @@ emo_classes: ["neu","hap","ang","sad","fear","disgust","contempt","surprise","ot
 #   CATEGORICAL LOSS CONFIG
 # ==========================
 cat_loss:
-  type: kld          # ce | cbce | kld | jsd
+  type: kld                   # ce | cbce | kld | jsd
 
 cbce:
-  enabled: false          # toggled automatically if cat_loss=cbce
-  beta: 0.9999            # effective number smoothing
+  enabled: false              # toggled automatically if cat_loss=cbce
+  beta: 0.9999                # effective number smoothing
   reduction: mean
   class_counts:
     ang: 24910
@@ -187,9 +143,10 @@ kld_weighting:
   normalize: mean
   min_w: 0.25
   max_w: 5.0
+
 # VAD head config
 out_n_neurons: 6
-vad_target_scale: "neg1_1"   # neg1_1 | zscore | 1_7
+vad_target_scale: "neg1_1"                # neg1_1 | zscore | 1_7
 vad_dim_weights: [1.4, 1.0, 1.0]
 
 # SmoothL1Loss beta used in compute_objectives()

@@ -60,9 +60,6 @@ def print_stage_summary(
     enc_train = sum(p.requires_grad for p in enc_params)
     enc_pct = 100.0 * enc_train / max(enc_total, 1)
 
-    # ---- Augmentation phase (scheduler) ----
-    aug_phase = getattr(getattr(brain, "aug_scheduler", None), "current_phase", "NA")
-
     # ---- Label mode (hard/primary/merged/etc.) ----
     label_mode = getattr(brain, "current_label_mode", None)
     if label_mode is None:
@@ -174,7 +171,6 @@ def print_stage_summary(
 
     print("\nModel State:")
     print(f"  Encoder train : {enc_pct:.1f} %")
-    print(f"  Augmentation  : {aug_phase}")
     print(f"  Label mode    : {label_mode}")
 
     print("-" * 30, flush=True)

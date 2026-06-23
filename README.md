@@ -26,7 +26,7 @@ The implementation includes:
 - `dataio_msp_podcast.py` — MSP-Podcast data loading utilities
 - `prepare_msp_podcast.py` — MSP-Podcast preparation utilities
 - `hparams/wavlm_ser_example.yaml` — example WavLM SER training configuration
-- `utils/` — model, augmentation, logging, metric, and training utilities
+- `utils/` — model, logging, metric, and training utilities
 
 
 ## Installation
@@ -54,7 +54,6 @@ Example paths to update:
 ```yaml
 data_folder: /path/to/MSP-PODCAST2.0/Audios
 json_root: /path/to/MSP-PODCAST2.0/i26_json
-rir_folder: /path/to/RIRS_NOISES/real_rirs_isotropic_noises
 ```
 
 To prepare the paper-relevant manifest variants, use one of the following:
