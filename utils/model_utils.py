@@ -1,6 +1,5 @@
 import torch
 import numpy as np
-import torch.nn.functional as F
 import torch.nn as nn
 import os
 import sys
@@ -19,32 +18,13 @@ try:
 except Exception:
     # Older SpeechBrain (deprecated but still works)
     from speechbrain.lobes.models.huggingface_transformers.wav2vec2 import Wav2Vec2
-from transformers import WhisperProcessor, WhisperModel
 
 # -------------------------------------------------
 # ----------- Self-supervised Model ---------------
 # -------------------------------------------------
-class WhisperFeatureExtractor(torch.nn.Module):
-    def __init__(self, model_size="base", device="cuda"):
-        super().__init__()
-        self.processor = WhisperProcessor.from_pretrained(f"openai/whisper-{model_size}")
-        self.model = WhisperModel.from_pretrained(f"openai/whisper-{model_size}").to(device)
-    
-    def forward(self, wavs, wav_lens=None):
-        inputs = self.processor(wavs, sampling_rate=16000, return_tensors="pt", padding=True)
-        with torch.no_grad():
-            outputs = self.model(**inputs)
-        return outputs.last_hidden_state
-
 def get_ssl_model(hparams):
     model_name = str(_hp_get(hparams, "pretrained_model", "wavlm")).lower()
     save_path = _hp_get(hparams, "save_folder", "./save")
-    run_opts = _hp_get(hparams, "run_opts", None)
-    # `run_opts` can be a dict OR a SpeechBrain RunOptions object.
-    if isinstance(run_opts, dict):
-        device = run_opts.get("device", "cpu")
-    else:
-        device = getattr(run_opts, "device", "cpu") if run_opts is not None else "cpu"
 
     if model_name == "wavlm":
         # Prefer YAML-provided hub + folder (wavlm-base vs wavlm-large etc.)
@@ -57,23 +37,11 @@ def get_ssl_model(hparams):
             save_path=folder,
             output_all_hiddens=False,
         )
-    elif model_name == "wav2vec2":
-        return Wav2Vec2(
-            source="facebook/wav2vec2-base-960h",
-            save_path=f"{save_path}/wav2vec2",
-            output_all_hiddens=False,
-        )
-    elif model_name == "hubert":
-        return Wav2Vec2(
-            source="facebook/hubert-base-ls960",
-            save_path=f"{save_path}/hubert",
-            output_all_hiddens=False,
-        )
-    elif model_name == "whisper":
-        whisper_size = str(_hp_get(hparams, "whisper_size", "large"))
-        return WhisperFeatureExtractor(model_size=whisper_size, device=device)
     else:
-        raise ValueError(f"Unknown model: {model_name}")
+        raise ValueError(
+            f"Unsupported pretrained_model '{model_name}'. "
+            "Only WavLM is supported in this public release."
+        )
     
 
 def concordance_cc(x, y, eps=1e-8):
@@ -207,41 +175,6 @@ class TCGRUHead(nn.Module):
         h_last = self._compute_h_last(framewise=framewise, lens=lens)
         return self.emb(h_last)
     
-
-# --- Hybrid Temporal CNN Head ---
-class TemporalCNN(nn.Module):
-    """Lightweight temporal CNN over SSL frame features.
-
-    Input:  [B, T, D]
-    Output: [B, T, D]
-    """
-
-    def __init__(self, feat_dim, channels=(256, 256), kernel_size=5, dropout=0.1):
-        super().__init__()
-        layers = []
-        in_ch = feat_dim
-        pad = kernel_size // 2
-
-        for ch in channels:
-            layers += [
-                nn.Conv1d(in_ch, ch, kernel_size, padding=pad),
-                nn.BatchNorm1d(ch),
-                nn.GELU(),
-                nn.Dropout(dropout),
-            ]
-            in_ch = ch
-
-        # project back to feat_dim so attention pooling stays unchanged
-        layers.append(nn.Conv1d(in_ch, feat_dim, kernel_size=1))
-        self.net = nn.Sequential(*layers)
-
-    def forward(self, x):
-        # x: [B, T, D] → [B, D, T]
-        x = x.transpose(1, 2)
-        x = self.net(x)
-        return x.transpose(1, 2)
-
-
 def save_model_info(brain, save_dir=None):
     """Write a lightweight reproducibility snapshot for this run.
 
@@ -307,10 +240,6 @@ def save_model_info(brain, save_dir=None):
         if attn_pool_obj is None and isinstance(modules, dict):
             attn_pool_obj = modules.get("attn_pool", None)
 
-        temporal_cnn_obj = getattr(brain, "temporal_cnn", None)
-        if temporal_cnn_obj is None and isinstance(modules, dict):
-            temporal_cnn_obj = modules.get("temporal_cnn", None)
-
         with open(arch_path, "w") as f:
             # ---- versions / environment ----
             f.write("=== ENV ===\n")
@@ -363,7 +292,6 @@ def save_model_info(brain, save_dir=None):
             _safe_write(f, "SSL MODEL", ssl_obj)
             _safe_write(f, "TCGRU HEAD", tcgru_obj)
             _safe_write(f, "ATTENTION POOL", attn_pool_obj)
-            _safe_write(f, "TEMPORAL CNN", temporal_cnn_obj)
 
             if isinstance(modules, dict):
                 _safe_write(f, "VAD MLP", modules.get("vad_mlp", None))

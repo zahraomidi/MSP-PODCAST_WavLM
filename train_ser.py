@@ -31,12 +31,11 @@ from utils.metric_utils import (
 # from utils.subsampler import BalancedSubsetPerEpochSampler
 
 from utils.augmentation_scheduler import AugmentationScheduler
-from utils.model_utils import TemporalCNN
 from validate_config import validate_hparams
 from dataio_msp_podcast import dataio_prep
 
 from utils.utils import set_global_seed, _hp_get
-from utils.model_utils import get_ssl_model, WhisperFeatureExtractor, TCGRUHead
+from utils.model_utils import get_ssl_model, TCGRUHead
 from utils.unfreeze_controller import (
     _reapply_unfreeze_from_state,
     _resolve_encoder_layers,
@@ -402,30 +401,8 @@ class SerBrain(sb.Brain):
         # --- attention pooling over time (used only when TC-GRU head is disabled) ---
         self._init_attention_pool()
 
-        # --- optional hybrid CNN head ---
-        self.use_hybrid_head = bool(getattr(self.hparams, "use_hybrid_head", False))
-        if self.use_hybrid_head:
-            cnn_channels = getattr(self.hparams, "cnn_channels", [256, 256])
-            cnn_kernel   = int(getattr(self.hparams, "cnn_kernel", 5))
-            cnn_dropout  = float(getattr(self.hparams, "cnn_dropout", 0.1))
-
-            self.temporal_cnn = TemporalCNN(
-                feat_dim=int(getattr(self.hparams, "ssl_hidden_dim", 768)),
-                channels=cnn_channels,
-                kernel_size=cnn_kernel,
-                dropout=cnn_dropout,
-            ).to(self.device)
-
-            self.modules["temporal_cnn"] = self.temporal_cnn
-            self._log(
-                f"[HYBRID] TemporalCNN enabled: channels={cnn_channels}, "
-                f"kernel={cnn_kernel}, dropout={cnn_dropout}"
-            )
-        else:
-            self.temporal_cnn = None
-
         # ---- Save model architecture for inspection (AFTER all heads exist) ----
-        # NOTE: save_model_info now prints optional heads (tc_gru_head / attn_pool / temporal_cnn),
+        # NOTE: save_model_info now prints optional heads (tc_gru_head / attn_pool),
         # so do NOT append here (avoids stale/overwritten dumps).
         try:
             save_model_info(self, self.hparams.save_folder)
@@ -435,7 +412,7 @@ class SerBrain(sb.Brain):
         # --- initial freeze: encoder off, heads on ---
         for p in self.modules["ssl_model"].parameters():
             p.requires_grad = False
-        for k in ("vad_mlp", "cat_mlp", "attn_pool", "temporal_cnn", "tc_gru_head"):
+        for k in ("vad_mlp", "cat_mlp", "attn_pool", "tc_gru_head"):
             if k in self.modules:
                 for p in self.modules[k].parameters():
                     p.requires_grad = True
@@ -482,7 +459,7 @@ class SerBrain(sb.Brain):
         # --- register recoverables ---
         if getattr(self, "checkpointer", None) is not None:
             # heads
-            for k in ("vad_mlp", "cat_mlp", "tc_gru_head", "attn_pool", "temporal_cnn"):
+            for k in ("vad_mlp", "cat_mlp", "tc_gru_head", "attn_pool"):
                 if k in self.modules:
                     self.checkpointer.add_recoverable(k, self.modules[k])
 
@@ -1669,7 +1646,7 @@ class SerBrain(sb.Brain):
         self._label_assert_done = True
 
     def compute_forward(self, batch, stage):
-        """Minimal forward: SSL -> optional CNN -> pooling -> heads."""
+        """Minimal forward: SSL -> pooling -> heads."""
         verbose = False
 
         batch = batch.to(self.device)
@@ -1768,12 +1745,6 @@ class SerBrain(sb.Brain):
                 raise RuntimeError(f"ssl_model returned dict without 'last_hidden_state' key: {ssl_out.keys()}")
         else:
             framewise = ssl_out  # [B, T, D]
-
-        # ----- Optional Temporal CNN -----
-        if self.use_hybrid_head and self.temporal_cnn is not None:
-            framewise = self.temporal_cnn(framewise)  # [B, T, D]
-            if verbose:
-                self._log(f"[HYBRID] After TemporalCNN, framewise shape = {framewise.shape}")
 
         # ----- Pool / Head over time -----
         if getattr(self, "use_tc_gru_head", False) and getattr(self, "tc_gru_head", None) is not None:
@@ -3766,7 +3737,7 @@ if __name__ == "__main__":
 
     # validate_hparams(hparams)
 
-    # Make run_opts visible (your get_ssl_model reads it)
+    # Make run_opts visible to model initialization utilities.
     hparams["run_opts"] = run_opts
 
     # -----------------------------

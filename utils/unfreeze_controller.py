@@ -34,7 +34,7 @@ def _iter_params(m: Any):
 def _resolve_encoder_layers(brain):
     """
     Returns the list/ModuleList of transformer layers for gradual unfreeze.
-    Handles SB HF-wrapped models like WavLM / Wav2Vec2 in 1.0.2.
+    Handles SpeechBrain HF-wrapped WavLM encoders in 1.0.2.
     """
     m = _mod_get(brain.modules, "ssl_model")
     if m is None:
