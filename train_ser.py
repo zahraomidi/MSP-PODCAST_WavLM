@@ -503,7 +503,7 @@ class SerBrain(sb.Brain):
 
             ssl_sched = getattr(self.hparams, "lr_annealing_ssl", None)
             if ssl_sched is None:
-                ssl_sched = getattr(self.hparams, "lr_annealing_wavlm", None)  # legacy fallback
+                ssl_sched = getattr(self.hparams, "lr_annealing_wavlm", None)  # compatibility alias
 
             load_info = load_from_ckpt(
                 ckpt_path=ckpt_path,
@@ -2700,7 +2700,7 @@ class SerBrain(sb.Brain):
                         try:
                             self.checkpointer.save_checkpoint(meta=latest_meta)
                         except TypeError:
-                            # Compatibility with older SpeechBrain signatures.
+                            # Compatibility with SpeechBrain signatures that omit meta.
                             self.checkpointer.save_checkpoint()
                     else:
                         self._log(
@@ -3249,7 +3249,7 @@ def load_from_ckpt(
     Notes:
       - This pipeline uses a *single* optimizer with param groups (SSL vs heads).
         Therefore there is no separate ssl_opt.
-      - lr_annealing_ssl is the SSL-group scheduler (legacy fallback handled by caller).
+      - lr_annealing_ssl is the SSL-group scheduler (compatibility alias handled by caller).
     """
     search_dir, target_ckpt_dir, payload_dir = _resolve_ckpt_paths(ckpt_path)
     restore_info = {
@@ -3305,8 +3305,8 @@ def load_from_ckpt(
             recoverables["dataloader-TRAIN"] = dataloader_train
 
         cp = Checkpointer(checkpoints_dir=search_dir, recoverables=recoverables)
-        # Temporary checkpointer must know custom object hooks too, otherwise
-        # older SpeechBrain raises "Don't know how to load <UnfreezeState>".
+        # Temporary checkpointer must know custom object hooks because some
+        # SpeechBrain versions cannot otherwise load UnfreezeState.
         try:
             if hasattr(cp, "custom_save_hooks") and hasattr(cp, "custom_load_hooks"):
                 if unfreeze_state is not None:
@@ -3315,7 +3315,7 @@ def load_from_ckpt(
                 if curriculum_state is not None:
                     cp.custom_save_hooks["curriculum_state"] = _save_curriculum_state
                     cp.custom_load_hooks["curriculum_state"] = _load_curriculum_state
-            # Keep these optional for backward compatibility with older ckpts.
+            # Keep these optional for checkpoints that predate these recoverables.
             if hasattr(cp, "optional_recoverables"):
                 if unfreeze_state is not None:
                     cp.optional_recoverables["unfreeze_state"] = True
