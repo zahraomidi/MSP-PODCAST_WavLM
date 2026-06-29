@@ -225,3 +225,41 @@ h2 {
     grid-template-columns: 1fr;
   }
 }
+
+.figure-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 22px;
+  padding: 18px;
+  margin-bottom: 26px;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
+}
+
+.figure-card img {
+  width: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 1px solid #f1f5f9;
+}
+
+.figure-caption {
+  color: #4b5563;
+  line-height: 1.6;
+  margin-top: 14px;
+  font-size: 0.98rem;
+}
+
+.conclusion-box {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-left: 6px solid #7c3aed;
+  border-radius: 18px;
+  padding: 24px 28px;
+}
+
+.conclusion-box p {
+  margin: 0;
+  color: #374151;
+  line-height: 1.7;
+  font-size: 1.05rem;
+}
