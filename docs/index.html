@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Learning from Annotation Uncertainty</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="container">
+    <section class="hero">
+      <p class="tag">Interspeech 2026 · Speech Emotion Recognition</p>
+      <h1>Learning from Annotation Uncertainty</h1>
+      <h2>Entropy-Aware Curriculum for Speech Emotion Recognition</h2>
+      <p class="summary">
+        This project studies distribution-based supervision for SER using WavLM on MSP-Podcast 2.0.
+        Instead of collapsing listener disagreement into one hard label, we train models with annotator
+        vote distributions and analyze how uncertainty affects emotion recognition.
+      </p>
+
+      <div class="buttons">
+        <a href="#" class="button">Paper</a>
+        <a href="https://github.com/zahraomidi/WavLM-MSPPodcast" class="button secondary">Code</a>
+      </div>
+    </section>
+
+    <section class="cards">
+      <div class="card">
+        <h3>Problem</h3>
+        <p>Hard consensus labels hide annotator disagreement and can collapse ambiguous samples into a single category.</p>
+      </div>
+      <div class="card">
+        <h3>Idea</h3>
+        <p>Use primary and merged primary-secondary vote distributions as supervision targets.</p>
+      </div>
+      <div class="card">
+        <h3>Finding</h3>
+        <p>Distributional objectives reduce JSD/KLD and better reflect perceptual uncertainty.</p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
