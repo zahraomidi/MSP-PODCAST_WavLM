@@ -263,3 +263,205 @@ h2 {
   line-height: 1.7;
   font-size: 1.05rem;
 }
+
+.section-text {
+  color: #374151;
+  line-height: 1.7;
+  font-size: 1.05rem;
+  max-width: 900px;
+}
+
+.table-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 18px;
+  overflow-x: auto;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.96rem;
+}
+
+th {
+  text-align: left;
+  color: #111827;
+  border-bottom: 2px solid #e5e7eb;
+  padding: 12px;
+  white-space: nowrap;
+}
+
+td {
+  border-bottom: 1px solid #f1f5f9;
+  padding: 12px;
+  color: #374151;
+  white-space: nowrap;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table-note {
+  color: #4b5563;
+  line-height: 1.6;
+  font-size: 0.95rem;
+  margin-top: 14px;
+}
+
+.results-block {
+  margin-top: 30px;
+}
+
+.system-name {
+  font-weight: 700;
+  color: #111827;
+}
+
+.subsection-title {
+  margin-top: 28px;
+  margin-bottom: 12px;
+  font-size: 1.45rem;
+  color: #111827;
+}
+
+.results-table th {
+  font-size: 0.95rem;
+}
+
+.results-table td {
+  vertical-align: top;
+}
+
+.abbr {
+  display: inline-block;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.full-name {
+  color: #4b5563;
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.ci {
+  color: #6b7280;
+  font-size: 0.84rem;
+}
+
+.best-cell {
+  background: #f5f3ff;
+  color: #4c1d95;
+  font-weight: 800;
+  border-radius: 10px;
+}
+
+.key-card {
+  margin-top: 24px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 20px 24px;
+}
+
+.key-card h3 {
+  margin-top: 0;
+  color: #111827;
+}
+
+.key-card p {
+  margin-bottom: 0;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.paper-results-table th {
+  text-align: center;
+}
+
+.paper-results-table td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.paper-results-table td:first-child,
+.paper-results-table td:nth-child(2),
+.paper-results-table th:first-child,
+.paper-results-table th:nth-child(2) {
+  text-align: left;
+}
+
+.target-name {
+  font-weight: 700;
+  color: #111827;
+  min-width: 210px;
+}
+
+.setting-name {
+  color: #374151;
+  font-weight: 600;
+  min-width: 190px;
+}
+
+.metric-value {
+  display: inline-block;
+  font-weight: 750;
+  color: #111827;
+}
+
+.metric-ci {
+  display: inline-block;
+  margin-top: 3px;
+  color: #6b7280;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.best-cell {
+  background: #f5f3ff;
+  color: #4c1d95;
+  font-weight: 800;
+}
+
+.best-cell .metric-value {
+  color: #4c1d95;
+}
+
+.best-cell .metric-ci {
+  color: #6d28d9;
+}
+
+.target-name {
+  min-width: 150px;
+}
+
+.setting-name {
+  min-width: 130px;
+}
+
+/* Keep result-table metric text consistent with the rest of the page */
+.paper-results-table .metric-value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.paper-results-table .metric-ci {
+  font-size: 0.78rem;
+  line-height: 1.25;
+  margin-top: 2px;
+}
+
+.paper-results-table td {
+  padding: 12px 14px;
+}
+
+.paper-results-table th {
+  font-size: 0.95rem;
+  padding: 12px 14px;
+}
