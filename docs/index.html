@@ -38,6 +38,52 @@
         <p>Distributional objectives reduce JSD/KLD and better reflect perceptual uncertainty.</p>
       </div>
     </section>
+
+    <section class="section">
+      <h2 class="section-title">Main Findings</h2>
+      <div class="findings">
+        <div class="finding">
+          <span class="number">↓ JSD/KLD</span>
+          <p>Distribution-based supervision improves alignment with annotator vote distributions compared with hard-label training.</p>
+        </div>
+        <div class="finding">
+          <span class="number">Other class</span>
+          <p>Hard supervision partly benefits by assigning ambiguous utterances to the residual <em>Other</em> category.</p>
+        </div>
+        <div class="finding">
+          <span class="number">Entropy</span>
+          <p>High-entropy utterances remain challenging, showing that perceptual ambiguity is not fully solved by hard categorical prediction.</p>
+        </div>
+        <div class="finding">
+          <span class="number">Uncertainty</span>
+          <p>Distributional targets better preserve listener disagreement by spreading probability mass across structured emotion categories.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Method Overview</h2>
+      <div class="method-box">
+        <div class="method-step">Audio</div>
+        <div class="arrow">→</div>
+        <div class="method-step">WavLM-Base</div>
+        <div class="arrow">→</div>
+        <div class="method-step">TC-GRU Encoder</div>
+        <div class="arrow">→</div>
+        <div class="method-step">Emotion Distribution + VAD</div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Citation</h2>
+      <pre class="bibtex"><code>@inproceedings{omidi2026annotationuncertainty,
+  title     = {Learning from Annotation Uncertainty: Entropy-Aware Curriculum for Speech Emotion Recognition},
+  author    = {Omidi, Zahra and Hansen, John H. L.},
+  booktitle = {Proceedings of Interspeech},
+  year      = {2026}
+}</code></pre>
+    </section>
+
   </main>
 </body>
 </html>

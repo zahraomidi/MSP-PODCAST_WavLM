@@ -103,3 +103,88 @@ h2 {
     grid-template-columns: 1fr;
   }
 }
+
+.section {
+  margin-top: 56px;
+}
+
+.section-title {
+  font-size: 2rem;
+  color: #111827;
+  margin-bottom: 20px;
+}
+
+.findings {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.finding {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 22px;
+}
+
+.number {
+  display: inline-block;
+  color: #7c3aed;
+  font-weight: 800;
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+}
+
+.finding p {
+  color: #4b5563;
+  line-height: 1.55;
+  margin-bottom: 0;
+}
+
+.method-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 22px;
+  padding: 26px;
+  overflow-x: auto;
+}
+
+.method-step {
+  white-space: nowrap;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  padding: 14px 18px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.arrow {
+  color: #9ca3af;
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.bibtex {
+  background: #111827;
+  color: #f9fafb;
+  padding: 24px;
+  border-radius: 18px;
+  overflow-x: auto;
+  line-height: 1.5;
+}
+
+@media (max-width: 1000px) {
+  .findings {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 650px) {
+  .findings {
+    grid-template-columns: 1fr;
+  }
+}
