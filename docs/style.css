@@ -465,3 +465,32 @@ tbody tr:last-child td {
   font-size: 0.95rem;
   padding: 12px 14px;
 }
+
+.top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(248, 250, 252, 0.92);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid #e5e7eb;
+  padding: 12px 24px;
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.top-nav a {
+  color: #374151;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.top-nav a:hover {
+  color: #2563eb;
+}
+
+html {
+  scroll-behavior: smooth;
+}

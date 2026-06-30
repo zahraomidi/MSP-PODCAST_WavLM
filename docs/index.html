@@ -7,6 +7,16 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
+  <nav class="top-nav">
+    <a href="#architecture">Architecture</a>
+    <a href="#supervision">Supervision</a>
+    <a href="#uncertainty">Uncertainty</a>
+    <a href="#results">Results</a>
+    <a href="#embedding">Embedding</a>
+    <a href="#citation">Citation</a>
+  </nav>
+
   <main class="container">
 
     <section class="hero">
@@ -42,7 +52,7 @@
       </div>
     </section>
 
-    <section class="section">
+    <section class="section" id="architecture">
       <h2 class="section-title">Model Architecture</h2>
       <div class="figure-card">
         <img src="assets/architecture.jpg" alt="WavLM TC-GRU architecture for speech emotion recognition">
@@ -52,7 +62,7 @@
       </div>
     </section>
 
-    <section class="section">
+    <section class="section" id="supervision">
       <h2 class="section-title">Supervision Targets</h2>
       <div class="findings">
         <div class="finding">
@@ -74,7 +84,7 @@
       </div>
     </section>
 
-    <section class="section">
+    <section class="section" id="uncertainty">
       <h2 class="section-title">Supervision and Annotation Uncertainty</h2>
       <div class="figure-card">
         <img src="assets/entropy_by_class.png" alt="Entropy by emotion class for primary and merged vote distributions">
@@ -84,7 +94,7 @@
       </div>
     </section>
 
-    <section class="section">
+    <section class="section" id="findings">
       <h2 class="section-title">Main Findings</h2>
       <div class="findings">
         <div class="finding">
@@ -107,7 +117,7 @@
     </section>
 
 
-<section class="section">
+<section class="section" id="embedding">
       <h2 class="section-title">Embedding Visualization</h2>
       <div class="figure-card">
         <img src="assets/umap_comparison.jpg" alt="UMAP comparison for hard labels, entropy filtering, and entropy weighting">
@@ -127,7 +137,7 @@
     </section>
 
 
-    <section class="section">
+    <section class="section" id="results">
       <h2 class="section-title">Results</h2>
       <p class="section-text">
         Categorical performance and distributional alignment are reported on MSP-Podcast 2.0 Test1/Test2.
@@ -340,7 +350,7 @@
 
     </section>
 
-    <section class="section">
+    <section class="section" id="citation">
       <h2 class="section-title">Citation</h2>
       <pre class="bibtex"><code>@inproceedings{omidi2026annotationuncertainty,
   title     = {Learning from Annotation Uncertainty: Entropy-Aware Curriculum for Speech Emotion Recognition},
