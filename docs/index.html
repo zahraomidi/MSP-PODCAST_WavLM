@@ -34,7 +34,7 @@
       </div>
       <div class="card">
         <h3>Supervision</h3>
-        <p>Hard consensus labels are compared with primary and merged primary-secondary annotator vote distributions.</p>
+        <p>Hard labels are compared with primary and merged primary-secondary annotator vote distributions.</p>
       </div>
       <div class="card">
         <h3>Architecture</h3>
@@ -57,11 +57,11 @@
       <div class="findings">
         <div class="finding">
           <span class="number">Hard</span>
-          <p>Hard consensus training collapses annotator disagreement into a single emotion category.</p>
+          <p>Hard training collapses annotator disagreement into a single emotion category.</p>
         </div>
         <div class="finding">
           <span class="number">Primary</span>
-          <p>Primary distribution targets are derived from primary annotator vote distributions.</p>
+          <p>Primary targets are derived from primary annotator vote distributions.</p>
         </div>
         <div class="finding">
           <span class="number">Merged</span>
@@ -106,7 +106,8 @@
       </div>
     </section>
 
-    <section class="section">
+
+<section class="section">
       <h2 class="section-title">Embedding Visualization</h2>
       <div class="figure-card">
         <img src="assets/umap_comparison.jpg" alt="UMAP comparison for hard labels, entropy filtering, and entropy weighting">
@@ -125,6 +126,220 @@
       </div>
     </section>
 
+
+    <section class="section">
+      <h2 class="section-title">Results</h2>
+      <p class="section-text">
+        Categorical performance and distributional alignment are reported on MSP-Podcast 2.0 Test1/Test2.
+        Hard = hard consensus; Primary = primary distribution; Merged 0.8P/0.2S and 0.9P/0.1S correspond to merged primary-secondary targets.
+        CE/CBCE = cross-entropy/class-balanced CE; KLD/WKLD = unweighted/weighted KLD;
+        entropy filtering/weighting and reverse entropy curricula are evaluated. M-F1 and UAR are reported in percent.
+      </p>
+
+
+      <div class="results-block">
+        <h3 class="subsection-title">Test1</h3>
+        <div class="table-card">
+          <table class="results-table paper-results-table">
+            <thead>
+              <tr>
+                <th>Target</th>
+                <th>Setting</th>
+                <th>M-F1</th>
+                <th>UAR</th>
+                <th>JSD↓</th>
+                <th>KLD↓</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class='target-name'>Hard</td>
+                <td class='setting-name'>CE</td>
+                <td class=''><span class='metric-value'>28.69</span><br><span class='metric-ci'>[28.29, 32.57]</span></td>
+                <td class=''><span class='metric-value'>29.29</span><br><span class='metric-ci'>[28.88, 29.69]</span></td>
+                <td class=''><span class='metric-value'>0.322</span><br><span class='metric-ci'>[0.320, 0.325]</span></td>
+                <td class=''><span class='metric-value'>1.672</span><br><span class='metric-ci'>[1.655, 1.688]</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Hard</td>
+                <td class='setting-name'>CBCE</td>
+                <td class=''><span class='metric-value'>28.36</span><br><span class='metric-ci'>[27.83, 28.93]</span></td>
+                <td class=''><span class='metric-value'>27.11</span><br><span class='metric-ci'>[26.68, 27.55]</span></td>
+                <td class=''><span class='metric-value'>0.329</span><br><span class='metric-ci'>[0.327, 0.331]</span></td>
+                <td class=''><span class='metric-value'>1.602</span><br><span class='metric-ci'>[1.587, 1.617]</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Primary</td>
+                <td class='setting-name'>KLD</td>
+                <td class=''><span class='metric-value'>28.36</span><br><span class='metric-ci'>[27.87, 28.84]</span></td>
+                <td class=''><span class='metric-value'>28.92</span><br><span class='metric-ci'>[28.57, 29.26]</span></td>
+                <td class=''><span class='metric-value'>0.203</span><br><span class='metric-ci'>[0.202, 0.204]</span></td>
+                <td class=''><span class='metric-value'>0.851</span><br><span class='metric-ci'>[0.845, 0.857]</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.8P/0.2S</td>
+                <td class='setting-name'>KLD</td>
+                <td class=''><span class='metric-value'>29.37</span><br><span class='metric-ci'>[28.95, 29.79]</span></td>
+                <td class=''><span class='metric-value'>32.90</span><br><span class='metric-ci'>[32.20, 33.61]</span></td>
+                <td class=''><span class='metric-value'>0.235</span><br><span class='metric-ci'>[0.234, 0.236]</span></td>
+                <td class=''><span class='metric-value'>0.928</span><br><span class='metric-ci'>[0.923, 0.933]</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>KLD</td>
+                <td class=''><span class='metric-value'>29.22</span><br><span class='metric-ci'>[28.69, 29.73]</span></td>
+                <td class=''><span class='metric-value'>29.07</span><br><span class='metric-ci'>[28.69, 29.47]</span></td>
+                <td class=''><span class='metric-value'>0.189</span><br><span class='metric-ci'>[0.188, 0.190]</span></td>
+                <td class=''><span class='metric-value'>0.809</span><br><span class='metric-ci'>[0.803, 0.815]</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Weighted KLD</td>
+                <td class=''><span class='metric-value'>30.39</span><br><span class='metric-ci'>[29.94, 30.83]</span></td>
+                <td class='best-cell'><span class='metric-value'>33.06</span><br><span class='metric-ci'>[32.38, 33.74]</span></td>
+                <td class=''><span class='metric-value'>0.228</span><br><span class='metric-ci'>[0.227, 0.229]</span></td>
+                <td class=''><span class='metric-value'>0.919</span><br><span class='metric-ci'>[0.913, 0.924]</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Filter</td>
+                <td class='best-cell'><span class='metric-value'>34.81</span><br><span class='metric-ci'>[34.37, 35.29]</span></td>
+                <td class=''><span class='metric-value'>27.87</span><br><span class='metric-ci'>[27.60, 28.15]</span></td>
+                <td class='best-cell'><span class='metric-value'>0.185</span><br><span class='metric-ci'>[0.184, 0.186]</span></td>
+                <td class=''><span class='metric-value'>0.761</span><br><span class='metric-ci'>[0.756, 0.766]</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Rev-Filter</td>
+                <td class=''><span class='metric-value'>28.57</span><br><span class='metric-ci'>[28.06, 29.09]</span></td>
+                <td class=''><span class='metric-value'>28.52</span><br><span class='metric-ci'>[28.15, 28.89]</span></td>
+                <td class=''><span class='metric-value'>0.215</span><br><span class='metric-ci'>[0.214, 0.216]</span></td>
+                <td class=''><span class='metric-value'>0.805</span><br><span class='metric-ci'>[0.801, 0.809]</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Weight</td>
+                <td class=''><span class='metric-value'>27.46</span><br><span class='metric-ci'>[27.12, 31.32]</span></td>
+                <td class=''><span class='metric-value'>28.01</span><br><span class='metric-ci'>[27.72, 28.32]</span></td>
+                <td class=''><span class='metric-value'>0.186</span><br><span class='metric-ci'>[0.185, 0.186]</span></td>
+                <td class='best-cell'><span class='metric-value'>0.760</span><br><span class='metric-ci'>[0.755, 0.765]</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Rev-Weight</td>
+                <td class=''><span class='metric-value'>28.69</span><br><span class='metric-ci'>[28.20, 29.20]</span></td>
+                <td class=''><span class='metric-value'>29.14</span><br><span class='metric-ci'>[28.77, 29.52]</span></td>
+                <td class=''><span class='metric-value'>0.190</span><br><span class='metric-ci'>[0.189, 0.191]</span></td>
+                <td class=''><span class='metric-value'>0.788</span><br><span class='metric-ci'>[0.782, 0.793]</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
+      <div class="results-block">
+        <h3 class="subsection-title">Test2</h3>
+        <div class="table-card">
+          <table class="results-table paper-results-table">
+            <thead>
+              <tr>
+                <th>Target</th>
+                <th>Setting</th>
+                <th>M-F1</th>
+                <th>UAR</th>
+                <th>JSD↓</th>
+                <th>KLD↓</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class='target-name'>Hard</td>
+                <td class='setting-name'>CE</td>
+                <td class=''><span class='metric-value'>26.29</span><br><span class='metric-ci'>[25.41, 30.37]</span></td>
+                <td class=''><span class='metric-value'>21.79</span><br><span class='metric-ci'>[21.06, 22.52]</span></td>
+                <td class=''><span class='metric-value'>0.340</span><br><span class='metric-ci'>[0.336, 0.343]</span></td>
+                <td class=''><span class='metric-value'>1.757</span><br><span class='metric-ci'>[1.728, 1.786]</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Hard</td>
+                <td class='setting-name'>CBCE</td>
+                <td class=''><span class='metric-value'>20.08</span><br><span class='metric-ci'>[19.59, 25.98]</span></td>
+                <td class=''><span class='metric-value'>20.15</span><br><span class='metric-ci'>[19.43, 20.87]</span></td>
+                <td class=''><span class='metric-value'>0.356</span><br><span class='metric-ci'>[0.353, 0.359]</span></td>
+                <td class=''><span class='metric-value'>1.704</span><br><span class='metric-ci'>[1.678, 1.730]</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Primary</td>
+                <td class='setting-name'>KLD</td>
+                <td class=''><span class='metric-value'>21.02</span><br><span class='metric-ci'>[20.39, 26.53]</span></td>
+                <td class=''><span class='metric-value'>22.14</span><br><span class='metric-ci'>[21.49, 22.81]</span></td>
+                <td class=''><span class='metric-value'>0.211</span><br><span class='metric-ci'>[0.210, 0.213]</span></td>
+                <td class=''><span class='metric-value'>0.914</span><br><span class='metric-ci'>[0.905, 0.924]</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.8P/0.2S</td>
+                <td class='setting-name'>KLD</td>
+                <td class=''><span class='metric-value'>21.63</span><br><span class='metric-ci'>[20.91, 22.34]</span></td>
+                <td class=''><span class='metric-value'>22.72</span><br><span class='metric-ci'>[21.66, 23.80]</span></td>
+                <td class=''><span class='metric-value'>0.239</span><br><span class='metric-ci'>[0.237, 0.241]</span></td>
+                <td class=''><span class='metric-value'>0.950</span><br><span class='metric-ci'>[0.942, 0.959]</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>KLD</td>
+                <td class=''><span class='metric-value'>28.16</span><br><span class='metric-ci'>[27.18, 32.63]</span></td>
+                <td class=''><span class='metric-value'>22.24</span><br><span class='metric-ci'>[21.60, 22.90]</span></td>
+                <td class=''><span class='metric-value'>0.199</span><br><span class='metric-ci'>[0.197, 0.201]</span></td>
+                <td class=''><span class='metric-value'>0.876</span><br><span class='metric-ci'>[0.867, 0.885]</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Weighted KLD</td>
+                <td class=''><span class='metric-value'>22.49</span><br><span class='metric-ci'>[21.73, 23.25]</span></td>
+                <td class='best-cell'><span class='metric-value'>23.09</span><br><span class='metric-ci'>[22.08, 24.13]</span></td>
+                <td class=''><span class='metric-value'>0.233</span><br><span class='metric-ci'>[0.231, 0.235]</span></td>
+                <td class=''><span class='metric-value'>0.940</span><br><span class='metric-ci'>[0.932, 0.949]</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Filter</td>
+                <td class=''><span class='metric-value'>31.51</span><br><span class='metric-ci'>[30.66, 37.81]</span></td>
+                <td class=''><span class='metric-value'>22.00</span><br><span class='metric-ci'>[21.44, 22.56]</span></td>
+                <td class='best-cell'><span class='metric-value'>0.194</span><br><span class='metric-ci'>[0.192, 0.195]</span></td>
+                <td class=''><span class='metric-value'>0.812</span><br><span class='metric-ci'>[0.805, 0.820]</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Rev-Filter</td>
+                <td class=''><span class='metric-value'>24.15</span><br><span class='metric-ci'>[23.51, 32.56]</span></td>
+                <td class=''><span class='metric-value'>21.80</span><br><span class='metric-ci'>[21.16, 22.45]</span></td>
+                <td class=''><span class='metric-value'>0.213</span><br><span class='metric-ci'>[0.211, 0.214]</span></td>
+                <td class=''><span class='metric-value'>0.810</span><br><span class='metric-ci'>[0.803, 0.817]</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Weight</td>
+                <td class='best-cell'><span class='metric-value'>31.81</span><br><span class='metric-ci'>[30.86, 37.51]</span></td>
+                <td class=''><span class='metric-value'>22.16</span><br><span class='metric-ci'>[21.60, 22.75]</span></td>
+                <td class=''><span class='metric-value'>0.194</span><br><span class='metric-ci'>[0.193, 0.196]</span></td>
+                <td class='best-cell'><span class='metric-value'>0.809</span><br><span class='metric-ci'>[0.801, 0.817]</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Rev-Weight</td>
+                <td class=''><span class='metric-value'>24.68</span><br><span class='metric-ci'>[23.99, 29.17]</span></td>
+                <td class=''><span class='metric-value'>22.79</span><br><span class='metric-ci'>[22.12, 23.46]</span></td>
+                <td class=''><span class='metric-value'>0.200</span><br><span class='metric-ci'>[0.199, 0.202]</span></td>
+                <td class=''><span class='metric-value'>0.845</span><br><span class='metric-ci'>[0.837, 0.854]</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
     <section class="section">
       <h2 class="section-title">Citation</h2>
       <pre class="bibtex"><code>@inproceedings{omidi2026annotationuncertainty,
@@ -136,5 +351,55 @@
     </section>
 
   </main>
+
+  <script>
+    async function loadResultsTable() {
+      const response = await fetch("assets/table2_metrics_with_bootstrap_ci.csv");
+      const csv = await response.text();
+      const lines = csv.trim().split(/\r?\n/);
+      const headers = lines[0].split(",");
+      const rows = lines.slice(1).map(line => {
+        const values = line.split(",");
+        return Object.fromEntries(headers.map((h, i) => [h, values[i]]));
+      });
+
+      const selectedSystems = ["H CB", "P KLD", "MH KLD", "MH +F", "MH +W"];
+      const selectedMetrics = ["Macro-F1", "JSD", "KLD", "Mean CCC"];
+      const tbody = document.querySelector("#results-table tbody");
+
+      function fmt(row) {
+        if (!row) return "—";
+        const value = Number(row.value);
+        const low = Number(row.ci_low);
+        const high = Number(row.ci_high);
+
+        if (row.metric === "Macro-F1") {
+          return `${value.toFixed(2)} [${low.toFixed(2)}, ${high.toFixed(2)}]`;
+        }
+        return `${value.toFixed(3)} [${low.toFixed(3)}, ${high.toFixed(3)}]`;
+      }
+
+      for (const split of ["Test1", "Test2"]) {
+        for (const system of selectedSystems) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${system}</td><td>${split}</td>`;
+
+          for (const metric of selectedMetrics) {
+            const row = rows.find(r =>
+              r.display_name === system &&
+              r.split === split &&
+              r.metric === metric
+            );
+            tr.innerHTML += `<td>${fmt(row)}</td>`;
+          }
+
+          tbody.appendChild(tr);
+        }
+      }
+    }
+
+    loadResultsTable();
+  </script>
+
 </body>
 </html>
