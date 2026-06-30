@@ -17,6 +17,8 @@
     <a href="#findings">Findings</a>
     <a href="#confusion-matrices">Confusions</a>
     <a href="#results">Results</a>
+    <a href="#vad-results">VAD</a>
+    <a href="#entropy-stratified-results">Entropy F1</a>
     <a href="#embedding">Embedding</a>
     <a href="#citation">Citation</a>
   </nav>
@@ -499,6 +501,407 @@
       </div>
 
     </section>
+
+
+<section class="section" id="vad-results">
+      <h2 class="section-title">Dimensional VAD Results</h2>
+      <p class="section-text">
+        Valence, arousal, and dominance are evaluated using concordance correlation coefficient (CCC). Mean CCC is the average across the three dimensions.
+      </p>
+
+
+      <div class="results-block">
+        <h3 class="subsection-title">Test1</h3>
+        <div class="table-card">
+          <table class="results-table paper-results-table">
+            <thead>
+              <tr>
+                <th>Target</th>
+                <th>Setting</th>
+                <th>Valence CCC</th>
+                <th>Arousal CCC</th>
+                <th>Dominance CCC</th>
+                <th>Mean CCC</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class='target-name'>Hard</td>
+                <td class='setting-name'>CE</td>
+                <td class=''><span class='metric-value'>0.638</span></td>
+                <td class=''><span class='metric-value'>0.670</span></td>
+                <td class=''><span class='metric-value'>0.562</span></td>
+                <td class=''><span class='metric-value'>0.623</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Hard</td>
+                <td class='setting-name'>CBCE</td>
+                <td class=''><span class='metric-value'>0.655</span></td>
+                <td class=''><span class='metric-value'>0.679</span></td>
+                <td class=''><span class='metric-value'>0.572</span></td>
+                <td class=''><span class='metric-value'>0.635</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Primary</td>
+                <td class='setting-name'>KLD</td>
+                <td class=''><span class='metric-value'>0.671</span></td>
+                <td class=''><span class='metric-value'>0.675</span></td>
+                <td class=''><span class='metric-value'>0.576</span></td>
+                <td class=''><span class='metric-value'>0.640</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.8P/0.2S</td>
+                <td class='setting-name'>KLD</td>
+                <td class=''><span class='metric-value'>0.671</span></td>
+                <td class=''><span class='metric-value'>0.677</span></td>
+                <td class=''><span class='metric-value'>0.578</span></td>
+                <td class=''><span class='metric-value'>0.642</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>KLD</td>
+                <td class='best-cell'><span class='metric-value'>0.675</span></td>
+                <td class=''><span class='metric-value'>0.685</span></td>
+                <td class='best-cell'><span class='metric-value'>0.593</span></td>
+                <td class='best-cell'><span class='metric-value'>0.651</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>WKLD</td>
+                <td class=''><span class='metric-value'>0.673</span></td>
+                <td class=''><span class='metric-value'>0.676</span></td>
+                <td class=''><span class='metric-value'>0.581</span></td>
+                <td class=''><span class='metric-value'>0.643</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Filter</td>
+                <td class=''><span class='metric-value'>0.672</span></td>
+                <td class='best-cell'><span class='metric-value'>0.687</span></td>
+                <td class=''><span class='metric-value'>0.590</span></td>
+                <td class=''><span class='metric-value'>0.650</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Rev-Filter</td>
+                <td class=''><span class='metric-value'>0.670</span></td>
+                <td class=''><span class='metric-value'>0.684</span></td>
+                <td class=''><span class='metric-value'>0.585</span></td>
+                <td class=''><span class='metric-value'>0.646</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Weight</td>
+                <td class=''><span class='metric-value'>0.674</span></td>
+                <td class=''><span class='metric-value'>0.685</span></td>
+                <td class=''><span class='metric-value'>0.582</span></td>
+                <td class=''><span class='metric-value'>0.647</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Rev-Weight</td>
+                <td class=''><span class='metric-value'>0.667</span></td>
+                <td class=''><span class='metric-value'>0.679</span></td>
+                <td class=''><span class='metric-value'>0.580</span></td>
+                <td class=''><span class='metric-value'>0.642</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
+      <div class="results-block">
+        <h3 class="subsection-title">Test2</h3>
+        <div class="table-card">
+          <table class="results-table paper-results-table">
+            <thead>
+              <tr>
+                <th>Target</th>
+                <th>Setting</th>
+                <th>Valence CCC</th>
+                <th>Arousal CCC</th>
+                <th>Dominance CCC</th>
+                <th>Mean CCC</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class='target-name'>Hard</td>
+                <td class='setting-name'>CE</td>
+                <td class=''><span class='metric-value'>0.436</span></td>
+                <td class=''><span class='metric-value'>0.507</span></td>
+                <td class=''><span class='metric-value'>0.376</span></td>
+                <td class=''><span class='metric-value'>0.440</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Hard</td>
+                <td class='setting-name'>CBCE</td>
+                <td class=''><span class='metric-value'>0.450</span></td>
+                <td class=''><span class='metric-value'>0.515</span></td>
+                <td class=''><span class='metric-value'>0.391</span></td>
+                <td class=''><span class='metric-value'>0.452</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Primary</td>
+                <td class='setting-name'>KLD</td>
+                <td class=''><span class='metric-value'>0.469</span></td>
+                <td class=''><span class='metric-value'>0.512</span></td>
+                <td class=''><span class='metric-value'>0.383</span></td>
+                <td class=''><span class='metric-value'>0.455</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.8P/0.2S</td>
+                <td class='setting-name'>KLD</td>
+                <td class=''><span class='metric-value'>0.465</span></td>
+                <td class=''><span class='metric-value'>0.523</span></td>
+                <td class=''><span class='metric-value'>0.398</span></td>
+                <td class=''><span class='metric-value'>0.462</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>KLD</td>
+                <td class='best-cell'><span class='metric-value'>0.471</span></td>
+                <td class=''><span class='metric-value'>0.520</span></td>
+                <td class=''><span class='metric-value'>0.401</span></td>
+                <td class=''><span class='metric-value'>0.464</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>WKLD</td>
+                <td class=''><span class='metric-value'>0.469</span></td>
+                <td class=''><span class='metric-value'>0.524</span></td>
+                <td class='best-cell'><span class='metric-value'>0.403</span></td>
+                <td class='best-cell'><span class='metric-value'>0.465</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Filter</td>
+                <td class=''><span class='metric-value'>0.458</span></td>
+                <td class='best-cell'><span class='metric-value'>0.525</span></td>
+                <td class=''><span class='metric-value'>0.403</span></td>
+                <td class=''><span class='metric-value'>0.462</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Rev-Filter</td>
+                <td class=''><span class='metric-value'>0.465</span></td>
+                <td class=''><span class='metric-value'>0.523</span></td>
+                <td class=''><span class='metric-value'>0.393</span></td>
+                <td class=''><span class='metric-value'>0.461</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Weight</td>
+                <td class=''><span class='metric-value'>0.467</span></td>
+                <td class=''><span class='metric-value'>0.524</span></td>
+                <td class=''><span class='metric-value'>0.399</span></td>
+                <td class=''><span class='metric-value'>0.463</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Rev-Weight</td>
+                <td class=''><span class='metric-value'>0.462</span></td>
+                <td class=''><span class='metric-value'>0.518</span></td>
+                <td class=''><span class='metric-value'>0.390</span></td>
+                <td class=''><span class='metric-value'>0.456</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+
+
+<section class="section" id="entropy-stratified-results">
+      <h2 class="section-title">Entropy-Stratified Macro-F1</h2>
+      <p class="section-text">
+        Macro-F1 is reported across entropy-based ambiguity bins. These results show how recognition performance changes as annotation uncertainty increases.
+      </p>
+
+
+      <div class="results-block">
+        <h3 class="subsection-title">Test1</h3>
+        <div class="table-card">
+          <table class="results-table paper-results-table">
+            <thead>
+              <tr>
+                <th>Target</th>
+                <th>Setting</th>
+                <th>Low</th>
+                <th>Mid</th>
+                <th>High</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class='target-name'>Hard</td>
+                <td class='setting-name'>CE</td>
+                <td class=''><span class='metric-value'>0.33</span></td>
+                <td class=''><span class='metric-value'>0.24</span></td>
+                <td class=''><span class='metric-value'>0.14</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Hard</td>
+                <td class='setting-name'>CBCE</td>
+                <td class=''><span class='metric-value'>0.30</span></td>
+                <td class=''><span class='metric-value'>0.24</span></td>
+                <td class=''><span class='metric-value'>0.18</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Primary</td>
+                <td class='setting-name'>KLD</td>
+                <td class='best-cell'><span class='metric-value'>0.35</span></td>
+                <td class=''><span class='metric-value'>0.26</span></td>
+                <td class=''><span class='metric-value'>0.12</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.8P/0.2S</td>
+                <td class='setting-name'>KLD</td>
+                <td class=''><span class='metric-value'>0.32</span></td>
+                <td class=''><span class='metric-value'>0.27</span></td>
+                <td class=''><span class='metric-value'>0.17</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>KLD</td>
+                <td class=''><span class='metric-value'>0.34</span></td>
+                <td class=''><span class='metric-value'>0.27</span></td>
+                <td class=''><span class='metric-value'>0.18</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>WKLD</td>
+                <td class=''><span class='metric-value'>0.33</span></td>
+                <td class='best-cell'><span class='metric-value'>0.28</span></td>
+                <td class='best-cell'><span class='metric-value'>0.18</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Filter</td>
+                <td class=''><span class='metric-value'>0.34</span></td>
+                <td class=''><span class='metric-value'>0.24</span></td>
+                <td class=''><span class='metric-value'>0.15</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Rev-Filter</td>
+                <td class=''><span class='metric-value'>0.34</span></td>
+                <td class=''><span class='metric-value'>0.26</span></td>
+                <td class=''><span class='metric-value'>0.16</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Weight</td>
+                <td class=''><span class='metric-value'>0.34</span></td>
+                <td class=''><span class='metric-value'>0.25</span></td>
+                <td class=''><span class='metric-value'>0.15</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Rev-Weight</td>
+                <td class=''><span class='metric-value'>0.34</span></td>
+                <td class=''><span class='metric-value'>0.26</span></td>
+                <td class=''><span class='metric-value'>0.17</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
+      <div class="results-block">
+        <h3 class="subsection-title">Test2</h3>
+        <div class="table-card">
+          <table class="results-table paper-results-table">
+            <thead>
+              <tr>
+                <th>Target</th>
+                <th>Setting</th>
+                <th>Low</th>
+                <th>Mid</th>
+                <th>High</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class='target-name'>Hard</td>
+                <td class='setting-name'>CE</td>
+                <td class=''><span class='metric-value'>0.21</span></td>
+                <td class=''><span class='metric-value'>0.19</span></td>
+                <td class=''><span class='metric-value'>0.14</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Hard</td>
+                <td class='setting-name'>CBCE</td>
+                <td class=''><span class='metric-value'>0.20</span></td>
+                <td class=''><span class='metric-value'>0.19</span></td>
+                <td class=''><span class='metric-value'>0.15</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Primary</td>
+                <td class='setting-name'>KLD</td>
+                <td class=''><span class='metric-value'>0.26</span></td>
+                <td class=''><span class='metric-value'>0.21</span></td>
+                <td class=''><span class='metric-value'>0.12</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.8P/0.2S</td>
+                <td class='setting-name'>KLD</td>
+                <td class=''><span class='metric-value'>0.23</span></td>
+                <td class=''><span class='metric-value'>0.21</span></td>
+                <td class='best-cell'><span class='metric-value'>0.15</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>KLD</td>
+                <td class=''><span class='metric-value'>0.25</span></td>
+                <td class=''><span class='metric-value'>0.21</span></td>
+                <td class=''><span class='metric-value'>0.14</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>WKLD</td>
+                <td class=''><span class='metric-value'>0.24</span></td>
+                <td class='best-cell'><span class='metric-value'>0.22</span></td>
+                <td class=''><span class='metric-value'>0.15</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Filter</td>
+                <td class=''><span class='metric-value'>0.25</span></td>
+                <td class=''><span class='metric-value'>0.20</span></td>
+                <td class=''><span class='metric-value'>0.13</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Rev-Filter</td>
+                <td class=''><span class='metric-value'>0.25</span></td>
+                <td class=''><span class='metric-value'>0.21</span></td>
+                <td class=''><span class='metric-value'>0.13</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Weight</td>
+                <td class='best-cell'><span class='metric-value'>0.26</span></td>
+                <td class=''><span class='metric-value'>0.21</span></td>
+                <td class=''><span class='metric-value'>0.13</span></td>
+              </tr>
+              <tr>
+                <td class='target-name'>Merged 0.9P/0.1S</td>
+                <td class='setting-name'>Rev-Weight</td>
+                <td class=''><span class='metric-value'>0.25</span></td>
+                <td class=''><span class='metric-value'>0.22</span></td>
+                <td class=''><span class='metric-value'>0.14</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
 
 <section class="section" id="embedding">
       <h2 class="section-title">Embedding Visualization</h2>
