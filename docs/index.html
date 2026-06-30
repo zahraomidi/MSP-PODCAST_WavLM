@@ -9,6 +9,7 @@
 <body>
 
   <nav class="top-nav">
+    <a href="#motivation">Motivation</a>
     <a href="#architecture">Architecture</a>
     <a href="#supervision">Supervision</a>
     <a href="#uncertainty">Uncertainty</a>
@@ -34,6 +35,22 @@
         <a href="https://arxiv.org/abs/2606.27536" class="button">arXiv</a>
         <a href="https://arxiv.org/pdf/2606.27536" class="button secondary">Paper PDF</a>
         <a href="https://github.com/zahraomidi/MSP-PODCAST_WavLM" class="button secondary">Code</a>
+      </div>
+    </section>
+
+
+    <section class="section intro-context" id="motivation">
+      <h2 class="section-title">Emotion Ambiguity and Annotation Uncertainty</h2>
+      <div class="context-card">
+        <p>
+          Emotion perception is subjective and context dependent. Barrett et al. reconsidered the common view that emotion categories are reliably signaled by distinctive expressions, highlighting limited reliability, lack of specificity, and limited generalizability in how emotions are expressed and perceived.
+        </p>
+        <p>
+          This ambiguity is also present in speech emotion recognition. Multi-rater corpora such as MSP-Podcast 2.0 contain annotator disagreement, mixed emotional interpretations, and label variability across speakers and contexts. Collapsing these annotations into a single hard consensus label discards this information and obscures ambiguity patterns present in the data.
+        </p>
+        <p>
+          Our findings support treating annotation disagreement as structured perceptual information rather than label noise. Distribution-based supervision better preserves this ambiguity, improves alignment with annotator vote distributions, and reduces reliance on the residual <em>Other</em> category compared with hard consensus training.
+        </p>
       </div>
     </section>
 

@@ -494,3 +494,23 @@ tbody tr:last-child td {
 html {
   scroll-behavior: smooth;
 }
+
+.context-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-left: 6px solid #2563eb;
+  border-radius: 20px;
+  padding: 28px 32px;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
+}
+
+.context-card p {
+  color: #374151;
+  line-height: 1.75;
+  font-size: 1.04rem;
+  margin-top: 0;
+}
+
+.context-card p:last-child {
+  margin-bottom: 0;
+}
