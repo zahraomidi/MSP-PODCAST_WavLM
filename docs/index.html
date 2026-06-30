@@ -111,22 +111,30 @@
 
 <section class="section" id="supervision">
       <h2 class="section-title">Supervision Targets</h2>
-      <div class="findings">
-        <div class="finding">
-          <span class="number">Hard</span>
-          <p>Hard training collapses annotator disagreement into a single emotion category.</p>
+      <p class="section-text">
+        We compare hard consensus labels with distributional targets derived from annotator vote distributions.
+        Primary and merged targets provide alternative forms of categorical supervision while preserving different amounts of annotation uncertainty.
+      </p>
+
+      <div class="supervision-grid">
+        <div class="supervision-card">
+          <h3>Hard</h3>
+          <p>Consensus emotion label used as a one-hot categorical target.</p>
         </div>
-        <div class="finding">
-          <span class="number">Primary</span>
-          <p>Primary targets are derived from primary annotator vote distributions.</p>
+
+        <div class="supervision-card">
+          <h3>Primary</h3>
+          <p>Distribution over emotion categories derived from primary annotator vote counts.</p>
         </div>
-        <div class="finding">
-          <span class="number">Merged</span>
-          <p>Merged targets combine primary and secondary annotator vote distributions.</p>
+
+        <div class="supervision-card">
+          <h3>M90</h3>
+          <p>Merged primary-secondary distribution using a 0.9P/0.1S target setting.</p>
         </div>
-        <div class="finding">
-          <span class="number">Entropy</span>
-          <p>Entropy-aware curricula use annotation uncertainty during training.</p>
+
+        <div class="supervision-card">
+          <h3>M80</h3>
+          <p>Merged primary-secondary distribution using a 0.8P/0.2S target setting.</p>
         </div>
       </div>
     </section>

@@ -514,3 +514,42 @@ html {
 .context-card p:last-child {
   margin-bottom: 0;
 }
+
+.supervision-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-top: 22px;
+}
+
+.supervision-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 22px;
+}
+
+.supervision-card h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #2563eb;
+  font-size: 1.35rem;
+}
+
+.supervision-card p {
+  color: #4b5563;
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+
+@media (max-width: 1000px) {
+  .supervision-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 650px) {
+  .supervision-grid {
+    grid-template-columns: 1fr;
+  }
+}
