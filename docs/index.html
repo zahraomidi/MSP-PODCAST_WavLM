@@ -10,9 +10,10 @@
 
   <nav class="top-nav">
     <a href="#motivation">Motivation</a>
-    <a href="#architecture">Architecture</a>
     <a href="#supervision">Supervision</a>
     <a href="#uncertainty">Uncertainty</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#findings">Findings</a>
     <a href="#results">Results</a>
     <a href="#embedding">Embedding</a>
     <a href="#citation">Citation</a>
@@ -69,17 +70,16 @@
       </div>
     </section>
 
-    <section class="section" id="architecture">
-      <h2 class="section-title">Model Architecture</h2>
-      <div class="figure-card">
-        <img src="assets/architecture.jpg" alt="WavLM TC-GRU architecture for speech emotion recognition">
-        <div class="figure-caption">
-          <strong>Model architecture.</strong> WavLM-Base is used as the backbone, followed by a TC-GRU model. The model jointly predicts a discrete emotion distribution and dimensional emotion attributes including valence, activation, and dominance.
-        </div>
+    <section class="section">
+      <h2 class="section-title">Conclusion</h2>
+      <div class="conclusion-box">
+        <p>
+          These findings suggest that SER systems should move beyond hard consensus labels toward distributional targets that better reflect listener disagreement.
+        </p>
       </div>
     </section>
 
-    <section class="section" id="supervision">
+<section class="section" id="supervision">
       <h2 class="section-title">Supervision Targets</h2>
       <div class="findings">
         <div class="finding">
@@ -101,7 +101,7 @@
       </div>
     </section>
 
-    <section class="section" id="uncertainty">
+<section class="section" id="uncertainty">
       <h2 class="section-title">Supervision and Annotation Uncertainty</h2>
       <div class="figure-card">
         <img src="assets/entropy_by_class.png" alt="Entropy by emotion class for primary and merged vote distributions">
@@ -111,7 +111,17 @@
       </div>
     </section>
 
-    <section class="section" id="findings">
+<section class="section" id="architecture">
+      <h2 class="section-title">Model Architecture</h2>
+      <div class="figure-card">
+        <img src="assets/architecture.jpg" alt="WavLM TC-GRU architecture for speech emotion recognition">
+        <div class="figure-caption">
+          <strong>Model architecture.</strong> WavLM-Base is used as the backbone, followed by a TC-GRU model. The model jointly predicts a discrete emotion distribution and dimensional emotion attributes including valence, activation, and dominance.
+        </div>
+      </div>
+    </section>
+
+<section class="section" id="findings">
       <h2 class="section-title">Main Findings</h2>
       <div class="findings">
         <div class="finding">
@@ -133,28 +143,7 @@
       </div>
     </section>
 
-
-<section class="section" id="embedding">
-      <h2 class="section-title">Embedding Visualization</h2>
-      <div class="figure-card">
-        <img src="assets/umap_comparison.jpg" alt="UMAP comparison for hard labels, entropy filtering, and entropy weighting">
-        <div class="figure-caption">
-          <strong>Utterance-level embedding visualization.</strong> UMAP projections compare Hard-CBCE, M90 entropy filtering, and M90 entropy weighting.
-        </div>
-      </div>
-    </section>
-
-    <section class="section">
-      <h2 class="section-title">Conclusion</h2>
-      <div class="conclusion-box">
-        <p>
-          These findings suggest that SER systems should move beyond hard consensus labels toward distributional targets that better reflect listener disagreement.
-        </p>
-      </div>
-    </section>
-
-
-    <section class="section" id="results">
+<section class="section" id="results">
       <h2 class="section-title">Results</h2>
       <p class="section-text">
         Categorical performance and distributional alignment are reported on MSP-Podcast 2.0 Test1/Test2.
@@ -367,7 +356,17 @@
 
     </section>
 
-    <section class="section" id="citation">
+<section class="section" id="embedding">
+      <h2 class="section-title">Embedding Visualization</h2>
+      <div class="figure-card">
+        <img src="assets/umap_comparison.jpg" alt="UMAP comparison for hard labels, entropy filtering, and entropy weighting">
+        <div class="figure-caption">
+          <strong>Utterance-level embedding visualization.</strong> UMAP projections compare Hard-CBCE, M90 entropy filtering, and M90 entropy weighting.
+        </div>
+      </div>
+    </section>
+
+<section class="section" id="citation">
       <h2 class="section-title">Citation</h2>
       <p class="section-text">
         If you use this code or findings, please cite the paper.
