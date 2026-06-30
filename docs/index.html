@@ -161,22 +161,29 @@
 
 <section class="section" id="findings">
       <h2 class="section-title">Main Findings</h2>
+      <p class="section-text">
+        Distributional supervision changes what the model learns from ambiguous annotations. We evaluate both categorical performance and alignment with annotator vote distributions.
+      </p>
+
       <div class="findings">
         <div class="finding">
-          <span class="number">JSD/KLD</span>
+          <span class="number">Distributional alignment</span>
           <p>Distributional objectives consistently improve alignment with annotator vote distributions, yielding lower JSD and KLD.</p>
         </div>
+
         <div class="finding">
-          <span class="number">Other</span>
+          <span class="number">Hard supervision</span>
           <p>Gains under hard supervision are partly driven by assigning ambiguous samples to the residual <em>Other</em> category.</p>
         </div>
+
         <div class="finding">
-          <span class="number">Entropy</span>
-          <p>Entropy-stratified evaluation shows that high-ambiguity utterances remain challenging.</p>
+          <span class="number">Entropy-stratified evaluation</span>
+          <p>High-ambiguity utterances remain challenging under both hard and distribution-based supervision.</p>
         </div>
+
         <div class="finding">
-          <span class="number">Uncertainty</span>
-          <p>Distribution-based supervision provides more faithful modeling of perceptual uncertainty.</p>
+          <span class="number">Perceptual uncertainty</span>
+          <p>Distribution-based supervision provides more faithful modeling of perceptual uncertainty than hard consensus labels.</p>
         </div>
       </div>
     </section>
