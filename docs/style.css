@@ -553,3 +553,48 @@ html {
     grid-template-columns: 1fr;
   }
 }
+
+.figure-title {
+  margin: 4px 0 16px;
+  color: #111827;
+  font-size: 1.25rem;
+}
+
+.cm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 22px;
+  margin-top: 18px;
+  margin-bottom: 36px;
+}
+
+.cm-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 16px;
+  margin: 0;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
+}
+
+.cm-card img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
+}
+
+.cm-card figcaption {
+  margin-top: 12px;
+  text-align: center;
+  color: #111827;
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+@media (min-width: 1200px) {
+  .cm-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
