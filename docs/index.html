@@ -191,102 +191,147 @@
       </div>
     </section>
 
+
 <section class="section" id="confusion-matrices">
-      <h2 class="section-title">Additional Visual Analyses</h2>
+      <h2 class="section-title">Confusion Matrices Across Supervision Settings</h2>
       <p class="section-text">
-        Additional visual analyses for the supervision targets and training settings reported in the paper. These figures provide expanded class-wise and representation-level views that could not be included in the paper due to space constraints.
+        Confusion matrices are shown for the supervision targets and training settings reported in the paper. Each thumbnail can be opened in a new tab for full-resolution inspection.
       </p>
 
-      <h3 class="subsection-title">Confusion Matrices Across Supervision Settings</h3>
-      <p class="section-text">
-        Confusion matrices are shown for the experiments reported in the paper. Cells show prediction counts and row-normalized percentages.
-      </p>
+      <div class="analysis-card">
+        <h3>Confusion-matrix analysis</h3>
+        <p>
+          The confusion matrices show how supervision choice affects class-wise prediction behavior. Hard-label systems concentrate many ambiguous samples into dominant classes and the residual <em>Other</em> category, while distribution-based objectives redistribute uncertainty across structured emotion categories. Entropy-aware curricula further change these prediction patterns, although low-resource and high-ambiguity classes such as <em>Fear</em>, <em>Disgust</em>, <em>Contempt</em>, and <em>Surprise</em> remain challenging. This supports the paper's finding that distributional supervision provides a more faithful model of annotator disagreement than hard consensus labels.
+        </p>
+      </div>
+
+
 
       <h3 class="subsection-title">Test1</h3>
-      <div class="cm-grid">
-        <figure class="cm-card">
-          <img src="assets/confusion_matrices/test1/test1_h_ce_confusion.png" alt="Hard + CE confusion matrix on Test1">
+      <div class="cm-thumb-grid">
+        <figure class="cm-thumb-card">
+          <a href="assets/confusion_matrices/test1/test1_h_ce_confusion.png">
+            <img src="assets/confusion_matrices/test1/test1_h_ce_confusion.png" alt="Hard + CE confusion matrix on Test1">
+          </a>
           <figcaption>Hard + CE</figcaption>
         </figure>
-        <figure class="cm-card">
-          <img src="assets/confusion_matrices/test1/test1_h_cb_confusion.png" alt="Hard + CBCE confusion matrix on Test1">
+        <figure class="cm-thumb-card">
+          <a href="assets/confusion_matrices/test1/test1_h_cb_confusion.png">
+            <img src="assets/confusion_matrices/test1/test1_h_cb_confusion.png" alt="Hard + CBCE confusion matrix on Test1">
+          </a>
           <figcaption>Hard + CBCE</figcaption>
         </figure>
-        <figure class="cm-card">
-          <img src="assets/confusion_matrices/test1/test1_p_kld_confusion.png" alt="Primary + KLD confusion matrix on Test1">
+        <figure class="cm-thumb-card">
+          <a href="assets/confusion_matrices/test1/test1_p_kld_confusion.png">
+            <img src="assets/confusion_matrices/test1/test1_p_kld_confusion.png" alt="Primary + KLD confusion matrix on Test1">
+          </a>
           <figcaption>Primary + KLD</figcaption>
         </figure>
-        <figure class="cm-card">
-          <img src="assets/confusion_matrices/test1/test1_ml_kld_confusion.png" alt="M80 + KLD confusion matrix on Test1">
+        <figure class="cm-thumb-card">
+          <a href="assets/confusion_matrices/test1/test1_ml_kld_confusion.png">
+            <img src="assets/confusion_matrices/test1/test1_ml_kld_confusion.png" alt="M80 + KLD confusion matrix on Test1">
+          </a>
           <figcaption>M80 + KLD</figcaption>
         </figure>
-        <figure class="cm-card">
-          <img src="assets/confusion_matrices/test1/test1_mh_kld_confusion.png" alt="M90 + KLD confusion matrix on Test1">
+        <figure class="cm-thumb-card">
+          <a href="assets/confusion_matrices/test1/test1_mh_kld_confusion.png">
+            <img src="assets/confusion_matrices/test1/test1_mh_kld_confusion.png" alt="M90 + KLD confusion matrix on Test1">
+          </a>
           <figcaption>M90 + KLD</figcaption>
         </figure>
-        <figure class="cm-card">
-          <img src="assets/confusion_matrices/test1/test1_mh_wkld_confusion.png" alt="M90 + WKLD confusion matrix on Test1">
+        <figure class="cm-thumb-card">
+          <a href="assets/confusion_matrices/test1/test1_mh_wkld_confusion.png">
+            <img src="assets/confusion_matrices/test1/test1_mh_wkld_confusion.png" alt="M90 + WKLD confusion matrix on Test1">
+          </a>
           <figcaption>M90 + WKLD</figcaption>
         </figure>
-        <figure class="cm-card">
-          <img src="assets/confusion_matrices/test1/test1_mh_f_confusion.png" alt="M90 + Filter confusion matrix on Test1">
+        <figure class="cm-thumb-card">
+          <a href="assets/confusion_matrices/test1/test1_mh_f_confusion.png">
+            <img src="assets/confusion_matrices/test1/test1_mh_f_confusion.png" alt="M90 + Filter confusion matrix on Test1">
+          </a>
           <figcaption>M90 + Filter</figcaption>
         </figure>
-        <figure class="cm-card">
-          <img src="assets/confusion_matrices/test1/test1_mh_rf_confusion.png" alt="M90 + Rev-Filter confusion matrix on Test1">
+        <figure class="cm-thumb-card">
+          <a href="assets/confusion_matrices/test1/test1_mh_rf_confusion.png">
+            <img src="assets/confusion_matrices/test1/test1_mh_rf_confusion.png" alt="M90 + Rev-Filter confusion matrix on Test1">
+          </a>
           <figcaption>M90 + Rev-Filter</figcaption>
         </figure>
-        <figure class="cm-card">
-          <img src="assets/confusion_matrices/test1/test1_mh_w_confusion.png" alt="M90 + Weight confusion matrix on Test1">
+        <figure class="cm-thumb-card">
+          <a href="assets/confusion_matrices/test1/test1_mh_w_confusion.png">
+            <img src="assets/confusion_matrices/test1/test1_mh_w_confusion.png" alt="M90 + Weight confusion matrix on Test1">
+          </a>
           <figcaption>M90 + Weight</figcaption>
         </figure>
-        <figure class="cm-card">
-          <img src="assets/confusion_matrices/test1/test1_mh_rw_confusion.png" alt="M90 + Rev-Weight confusion matrix on Test1">
+        <figure class="cm-thumb-card">
+          <a href="assets/confusion_matrices/test1/test1_mh_rw_confusion.png">
+            <img src="assets/confusion_matrices/test1/test1_mh_rw_confusion.png" alt="M90 + Rev-Weight confusion matrix on Test1">
+          </a>
           <figcaption>M90 + Rev-Weight</figcaption>
         </figure>
       </div>
 
 
       <h3 class="subsection-title">Test2</h3>
-      <div class="cm-grid">
-        <figure class="cm-card">
-          <img src="assets/confusion_matrices/test2/test2_h_ce_confusion.png" alt="Hard + CE confusion matrix on Test2">
+      <div class="cm-thumb-grid">
+        <figure class="cm-thumb-card">
+          <a href="assets/confusion_matrices/test2/test2_h_ce_confusion.png">
+            <img src="assets/confusion_matrices/test2/test2_h_ce_confusion.png" alt="Hard + CE confusion matrix on Test2">
+          </a>
           <figcaption>Hard + CE</figcaption>
         </figure>
-        <figure class="cm-card">
-          <img src="assets/confusion_matrices/test2/test2_h_cb_confusion.png" alt="Hard + CBCE confusion matrix on Test2">
+        <figure class="cm-thumb-card">
+          <a href="assets/confusion_matrices/test2/test2_h_cb_confusion.png">
+            <img src="assets/confusion_matrices/test2/test2_h_cb_confusion.png" alt="Hard + CBCE confusion matrix on Test2">
+          </a>
           <figcaption>Hard + CBCE</figcaption>
         </figure>
-        <figure class="cm-card">
-          <img src="assets/confusion_matrices/test2/test2_p_kld_confusion.png" alt="Primary + KLD confusion matrix on Test2">
+        <figure class="cm-thumb-card">
+          <a href="assets/confusion_matrices/test2/test2_p_kld_confusion.png">
+            <img src="assets/confusion_matrices/test2/test2_p_kld_confusion.png" alt="Primary + KLD confusion matrix on Test2">
+          </a>
           <figcaption>Primary + KLD</figcaption>
         </figure>
-        <figure class="cm-card">
-          <img src="assets/confusion_matrices/test2/test2_ml_kld_confusion.png" alt="M80 + KLD confusion matrix on Test2">
+        <figure class="cm-thumb-card">
+          <a href="assets/confusion_matrices/test2/test2_ml_kld_confusion.png">
+            <img src="assets/confusion_matrices/test2/test2_ml_kld_confusion.png" alt="M80 + KLD confusion matrix on Test2">
+          </a>
           <figcaption>M80 + KLD</figcaption>
         </figure>
-        <figure class="cm-card">
-          <img src="assets/confusion_matrices/test2/test2_mh_kld_confusion.png" alt="M90 + KLD confusion matrix on Test2">
+        <figure class="cm-thumb-card">
+          <a href="assets/confusion_matrices/test2/test2_mh_kld_confusion.png">
+            <img src="assets/confusion_matrices/test2/test2_mh_kld_confusion.png" alt="M90 + KLD confusion matrix on Test2">
+          </a>
           <figcaption>M90 + KLD</figcaption>
         </figure>
-        <figure class="cm-card">
-          <img src="assets/confusion_matrices/test2/test2_mh_wkld_confusion.png" alt="M90 + WKLD confusion matrix on Test2">
+        <figure class="cm-thumb-card">
+          <a href="assets/confusion_matrices/test2/test2_mh_wkld_confusion.png">
+            <img src="assets/confusion_matrices/test2/test2_mh_wkld_confusion.png" alt="M90 + WKLD confusion matrix on Test2">
+          </a>
           <figcaption>M90 + WKLD</figcaption>
         </figure>
-        <figure class="cm-card">
-          <img src="assets/confusion_matrices/test2/test2_mh_f_confusion.png" alt="M90 + Filter confusion matrix on Test2">
+        <figure class="cm-thumb-card">
+          <a href="assets/confusion_matrices/test2/test2_mh_f_confusion.png">
+            <img src="assets/confusion_matrices/test2/test2_mh_f_confusion.png" alt="M90 + Filter confusion matrix on Test2">
+          </a>
           <figcaption>M90 + Filter</figcaption>
         </figure>
-        <figure class="cm-card">
-          <img src="assets/confusion_matrices/test2/test2_mh_rf_confusion.png" alt="M90 + Rev-Filter confusion matrix on Test2">
+        <figure class="cm-thumb-card">
+          <a href="assets/confusion_matrices/test2/test2_mh_rf_confusion.png">
+            <img src="assets/confusion_matrices/test2/test2_mh_rf_confusion.png" alt="M90 + Rev-Filter confusion matrix on Test2">
+          </a>
           <figcaption>M90 + Rev-Filter</figcaption>
         </figure>
-        <figure class="cm-card">
-          <img src="assets/confusion_matrices/test2/test2_mh_w_confusion.png" alt="M90 + Weight confusion matrix on Test2">
+        <figure class="cm-thumb-card">
+          <a href="assets/confusion_matrices/test2/test2_mh_w_confusion.png">
+            <img src="assets/confusion_matrices/test2/test2_mh_w_confusion.png" alt="M90 + Weight confusion matrix on Test2">
+          </a>
           <figcaption>M90 + Weight</figcaption>
         </figure>
-        <figure class="cm-card">
-          <img src="assets/confusion_matrices/test2/test2_mh_rw_confusion.png" alt="M90 + Rev-Weight confusion matrix on Test2">
+        <figure class="cm-thumb-card">
+          <a href="assets/confusion_matrices/test2/test2_mh_rw_confusion.png">
+            <img src="assets/confusion_matrices/test2/test2_mh_rw_confusion.png" alt="M90 + Rev-Weight confusion matrix on Test2">
+          </a>
           <figcaption>M90 + Rev-Weight</figcaption>
         </figure>
       </div>
@@ -992,6 +1037,54 @@
     }
 
     loadResultsTable();
+  </script>
+
+
+  <div id="image-lightbox" class="lightbox" aria-hidden="true">
+    <button class="lightbox-close" type="button" aria-label="Close">&times;</button>
+    <img class="lightbox-img" src="" alt="">
+    <div class="lightbox-caption"></div>
+  </div>
+
+  <script>
+    document.querySelectorAll(".cm-thumb-card img").forEach((img) => {
+      img.addEventListener("click", (event) => {
+        event.preventDefault();
+
+        const lightbox = document.getElementById("image-lightbox");
+        const lightboxImg = lightbox.querySelector(".lightbox-img");
+        const caption = lightbox.querySelector(".lightbox-caption");
+        const figcaption = img.closest("figure").querySelector("figcaption");
+
+        lightboxImg.src = img.src;
+        lightboxImg.alt = img.alt;
+        caption.textContent = figcaption ? figcaption.textContent : "";
+        lightbox.classList.add("active");
+        lightbox.setAttribute("aria-hidden", "false");
+      });
+    });
+
+    function closeLightbox() {
+      const lightbox = document.getElementById("image-lightbox");
+      const lightboxImg = lightbox.querySelector(".lightbox-img");
+      lightbox.classList.remove("active");
+      lightbox.setAttribute("aria-hidden", "true");
+      lightboxImg.src = "";
+    }
+
+    document.querySelector(".lightbox-close").addEventListener("click", closeLightbox);
+
+    document.getElementById("image-lightbox").addEventListener("click", (event) => {
+      if (event.target.id === "image-lightbox") {
+        closeLightbox();
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeLightbox();
+      }
+    });
   </script>
 
 </body>
