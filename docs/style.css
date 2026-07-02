@@ -598,3 +598,44 @@ html {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+.context-card a,
+.section-text a {
+  color: #2563eb;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.context-card a:hover,
+.section-text a:hover {
+  text-decoration: underline;
+}
+
+.related-reference {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 20px 24px;
+  margin-bottom: 22px;
+}
+
+.related-reference h3 {
+  margin-top: 0;
+  color: #111827;
+}
+
+.related-reference p {
+  color: #374151;
+  line-height: 1.7;
+  margin-bottom: 0;
+}
+
+.related-reference a {
+  color: #2563eb;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.related-reference a:hover {
+  text-decoration: underline;
+}
