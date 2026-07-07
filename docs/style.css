@@ -1075,3 +1075,187 @@ h2 {
 .buttons {
   margin-top: 22px !important;
 }
+
+/* Compact paper-based analysis cards */
+.analysis-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-left: 5px solid #7c3aed;
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin: 18px 0 22px;
+}
+
+.analysis-card h3 {
+  margin: 0 0 8px;
+  color: #111827;
+  font-size: 1rem;
+}
+
+.analysis-card p {
+  margin: 0;
+  color: #374151;
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+
+/* Paper-note style for analysis cards */
+.analysis-card h3 {
+  display: none !important;
+}
+
+.analysis-card {
+  border-left: 4px solid #7c3aed !important;
+  padding: 14px 18px !important;
+  margin: 16px 0 22px !important;
+}
+
+.analysis-card p {
+  font-size: 0.92rem !important;
+  line-height: 1.5 !important;
+}
+
+/* Final compact override for result tables */
+#results .table-card,
+#vad-results .table-card,
+#entropy-stratified-results .table-card {
+  padding: 8px 10px !important;
+  border-radius: 14px !important;
+}
+
+#results .results-block,
+#vad-results .results-block,
+#entropy-stratified-results .results-block {
+  margin-top: 16px !important;
+}
+
+#results .subsection-title,
+#vad-results .subsection-title,
+#entropy-stratified-results .subsection-title {
+  font-size: 1.25rem !important;
+  margin-top: 20px !important;
+  margin-bottom: 8px !important;
+}
+
+#results table,
+#vad-results table,
+#entropy-stratified-results table {
+  font-size: 0.80rem !important;
+}
+
+#results th,
+#vad-results th,
+#entropy-stratified-results th {
+  padding: 6px 8px !important;
+  font-size: 0.80rem !important;
+}
+
+#results td,
+#vad-results td,
+#entropy-stratified-results td {
+  padding: 6px 8px !important;
+}
+
+#results .metric-value,
+#vad-results .metric-value,
+#entropy-stratified-results .metric-value {
+  font-size: 0.86rem !important;
+  line-height: 1.1 !important;
+}
+
+#results .metric-ci,
+#vad-results .metric-ci,
+#entropy-stratified-results .metric-ci {
+  font-size: 0.66rem !important;
+  line-height: 1.1 !important;
+}
+
+#results .target-name,
+#vad-results .target-name,
+#entropy-stratified-results .target-name {
+  min-width: 105px !important;
+  font-size: 0.80rem !important;
+}
+
+#results .setting-name,
+#vad-results .setting-name,
+#entropy-stratified-results .setting-name {
+  min-width: 80px !important;
+  font-size: 0.80rem !important;
+}
+
+/* Make result-section explanatory text look like paper/table notes */
+#results > .section-text,
+#vad-results > .section-text,
+#entropy-stratified-results > .section-text {
+  font-size: 0.88rem !important;
+  line-height: 1.45 !important;
+  color: #4b5563 !important;
+  max-width: 980px !important;
+  margin-bottom: 14px !important;
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  padding: 12px 14px !important;
+}
+
+#results .section-title,
+#vad-results .section-title,
+#entropy-stratified-results .section-title {
+  margin-bottom: 10px !important;
+}
+
+/* Cleaner compact caption-style notes for result sections */
+#results > .section-text,
+#vad-results > .section-text,
+#entropy-stratified-results > .section-text {
+  background: transparent !important;
+  border: none !important;
+  border-left: 3px solid #c4b5fd !important;
+  border-radius: 0 !important;
+  padding: 2px 0 2px 12px !important;
+  font-size: 0.84rem !important;
+  line-height: 1.42 !important;
+  color: #4b5563 !important;
+  max-width: 1050px !important;
+  margin: 0 0 14px !important;
+}
+
+.inline-note {
+  font-weight: 800;
+  color: #111827;
+  white-space: nowrap;
+}
+
+#results > .section-text {
+  line-height: 1.5 !important;
+  padding-left: 14px !important;
+}
+
+#results > .section-text br {
+  display: block;
+  content: "";
+  margin-top: 6px;
+}
+
+/* Consistent caption/note style for result subsections */
+#vad-results > .section-text,
+#entropy-stratified-results > .section-text {
+  background: transparent !important;
+  border: none !important;
+  border-left: 3px solid #c4b5fd !important;
+  border-radius: 0 !important;
+  padding: 2px 0 2px 14px !important;
+  font-size: 0.84rem !important;
+  line-height: 1.5 !important;
+  color: #4b5563 !important;
+  max-width: 1050px !important;
+  margin: 0 0 14px !important;
+}
+
+#vad-results .analysis-card,
+#entropy-stratified-results .analysis-card,
+#results .analysis-card {
+  margin-top: 14px !important;
+  margin-bottom: 20px !important;
+}

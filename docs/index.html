@@ -140,6 +140,12 @@
           <p>Merged primary-secondary distribution using a 0.8P/0.2S target setting.</p>
         </div>
       </div>
+          <div class="analysis-card supervision-analysis">
+        <h3>Analysis</h3>
+        <p>
+          The supervision targets differ in how they represent annotator disagreement. Hard supervision assigns each utterance to a single consensus emotion, while primary and merged distributions retain probability mass across multiple emotion categories. This allows the categorical objective to model disagreement as part of the target distribution rather than treating it only as label noise.
+        </p>
+      </div>
     </section>
 
 <section class="section" id="uncertainty">
@@ -149,6 +155,12 @@
         <div class="figure-caption">
           <strong>Per-class annotation entropy.</strong> Entropy is shown under primary and merged primary-secondary vote distributions. Merged targets use 0.9P/0.1S and 0.8P/0.2S settings.
         </div>
+      </div>
+          <div class="analysis-card uncertainty-analysis">
+        <h3>Analysis</h3>
+        <p>
+          Annotation entropy is class-dependent rather than uniform across MSP-Podcast 2.0. Merging primary and secondary votes broadens the target distributions and increases high-entropy tail mass, especially for more ambiguous categories. This motivates treating entropy as an annotation-derived property for ambiguity-stratified evaluation and curriculum design.
+        </p>
       </div>
     </section>
 
@@ -347,6 +359,7 @@
         CE/CBCE = cross-entropy/class-balanced CE; KLD/WKLD = unweighted/weighted KLD;
         entropy filtering/weighting and reverse entropy curricula are evaluated. M-F1 and UAR are reported in percent.
       </p>
+
 
 
       <div class="results-block">
@@ -550,13 +563,19 @@
         </div>
       </div>
 
+<div class="analysis-card results-analysis">
+        <p>
+          Distributional objectives primarily improve alignment with annotator vote distributions, as reflected by lower JSD and KLD. Macro-F1 should be interpreted alongside these divergence measures because hard-label systems may benefit from collapsing ambiguous samples into the residual <em>Other</em> category, while distributional targets preserve uncertainty across emotion categories.
+        </p>
+      </div>
+
     </section>
 
 
 <section class="section" id="vad-results">
       <h2 class="section-title">Dimensional VAD Results</h2>
       <p class="section-text">
-        Valence, arousal, and dominance are evaluated using concordance correlation coefficient (CCC). Mean CCC is the average across the three dimensions.
+        Dimensional emotion prediction is evaluated using concordance correlation coefficient (CCC) for valence, arousal, and dominance. Mean CCC reports the average across the three affective dimensions, with higher values indicating stronger agreement with the reference dimensional annotations.
       </p>
 
 
@@ -761,6 +780,13 @@
         </div>
       </div>
 
+      <div class="analysis-card vad-analysis">
+        <p>
+          VAD prediction is evaluated jointly with categorical emotion recognition in the multitask architecture. These results are included to show whether changes in categorical supervision also affect dimensional affect modeling.
+        </p>
+      </div>
+
+
     </section>
 
 
@@ -768,8 +794,9 @@
 <section class="section" id="entropy-stratified-results">
       <h2 class="section-title">Entropy-Stratified Macro-F1</h2>
       <p class="section-text">
-        Macro-F1 is reported across entropy-based ambiguity bins. These results show how recognition performance changes as annotation uncertainty increases.
+        Macro-F1 is reported across entropy-based ambiguity bins. Entropy is computed from the annotation distribution and used to stratify utterances by the degree of annotator uncertainty.
       </p>
+
 
 
       <div class="results-block">
@@ -950,6 +977,13 @@
           </table>
         </div>
       </div>
+
+      <div class="analysis-card entropy-analysis">
+        <p>
+          Entropy-stratified evaluation shows how categorical performance changes as annotation uncertainty increases. High-entropy utterances remain challenging across supervision settings, indicating that perceptual ambiguity is not fully resolved by changing the categorical target alone.
+        </p>
+      </div>
+
     </section>
 
 
