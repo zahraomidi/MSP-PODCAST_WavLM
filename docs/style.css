@@ -957,3 +957,121 @@ html {
   margin-top: 24px !important;
   margin-bottom: 10px !important;
 }
+
+/* Compact body text and section spacing */
+.container {
+  max-width: 1180px !important;
+  padding: 44px 24px !important;
+}
+
+.section {
+  margin-top: 42px !important;
+}
+
+.section-title {
+  font-size: 1.85rem !important;
+  margin-bottom: 14px !important;
+  line-height: 1.2 !important;
+}
+
+.section-text {
+  font-size: 0.98rem !important;
+  line-height: 1.55 !important;
+  max-width: 980px !important;
+  margin-top: 0 !important;
+  margin-bottom: 18px !important;
+}
+
+.context-card {
+  padding: 22px 26px !important;
+}
+
+.context-card p {
+  font-size: 0.98rem !important;
+  line-height: 1.6 !important;
+  margin-bottom: 12px !important;
+}
+
+.context-card p:last-child {
+  margin-bottom: 0 !important;
+}
+
+.card,
+.finding,
+.supervision-card {
+  padding: 18px 20px !important;
+}
+
+.card h3,
+.finding h3,
+.supervision-card h3 {
+  font-size: 1.08rem !important;
+}
+
+.card p,
+.finding p,
+.supervision-card p {
+  font-size: 0.94rem !important;
+  line-height: 1.5 !important;
+}
+
+.number {
+  font-size: 0.98rem !important;
+  line-height: 1.25 !important;
+}
+
+.analysis-card {
+  padding: 18px 22px !important;
+  margin: 18px 0 24px !important;
+}
+
+.analysis-card h3 {
+  font-size: 1.08rem !important;
+  margin-bottom: 8px !important;
+}
+
+.analysis-card p {
+  font-size: 0.96rem !important;
+  line-height: 1.55 !important;
+}
+
+.figure-caption {
+  font-size: 0.92rem !important;
+  line-height: 1.45 !important;
+}
+
+.conclusion-box {
+  padding: 20px 24px !important;
+}
+
+.conclusion-box p {
+  font-size: 0.98rem !important;
+  line-height: 1.55 !important;
+}
+
+/* Compact hero */
+.hero {
+  padding: 38px 42px !important;
+}
+
+.hero h1,
+h1 {
+  font-size: 2.45rem !important;
+  line-height: 1.12 !important;
+}
+
+.hero h2,
+h2 {
+  font-size: 1.28rem !important;
+  line-height: 1.35 !important;
+}
+
+.summary {
+  font-size: 1rem !important;
+  line-height: 1.58 !important;
+  max-width: 920px !important;
+}
+
+.buttons {
+  margin-top: 22px !important;
+}
