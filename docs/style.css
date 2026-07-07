@@ -846,3 +846,63 @@ html {
   color: #374151;
   line-height: 1.7;
 }
+
+/* Final override: confusion matrices as compact clickable thumbnails */
+#confusion-matrices .cm-thumb-grid {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+  align-items: start !important;
+  margin-top: 18px !important;
+  margin-bottom: 42px !important;
+}
+
+#confusion-matrices .cm-thumb-card {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 14px !important;
+  padding: 10px !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05) !important;
+}
+
+#confusion-matrices .cm-thumb-card a {
+  display: block !important;
+  width: 100% !important;
+}
+
+#confusion-matrices .cm-thumb-card img {
+  width: 100% !important;
+  height: 190px !important;
+  object-fit: contain !important;
+  display: block !important;
+  border-radius: 8px !important;
+  border: 1px solid #f1f5f9 !important;
+  background: white !important;
+}
+
+#confusion-matrices .cm-thumb-card figcaption {
+  margin-top: 8px !important;
+  text-align: center !important;
+  color: #111827 !important;
+  font-weight: 750 !important;
+  font-size: 0.84rem !important;
+  line-height: 1.25 !important;
+}
+
+@media (max-width: 1200px) {
+  #confusion-matrices .cm-thumb-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 750px) {
+  #confusion-matrices .cm-thumb-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  #confusion-matrices .cm-thumb-card img {
+    height: 170px !important;
+  }
+}
