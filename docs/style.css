@@ -1,3 +1,9 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -6,16 +12,18 @@ body {
 }
 
 .container {
-  max-width: 1050px;
+  width: 100%;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 64px 24px;
+  padding: 44px 24px;
 }
 
 .hero {
+  width: 100%;
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 24px;
-  padding: 48px;
+  padding: 38px 42px;
   box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
 }
 
@@ -28,26 +36,28 @@ body {
 }
 
 h1 {
-  font-size: 3rem;
+  font-size: 2.45rem;
+  line-height: 1.12;
   margin: 12px 0 0;
 }
 
 h2 {
-  font-size: 1.5rem;
+  font-size: 1.28rem;
+  line-height: 1.35;
   color: #4b5563;
   font-weight: 500;
   margin-top: 8px;
 }
 
 .summary {
-  font-size: 1.1rem;
-  line-height: 1.7;
-  max-width: 850px;
+  font-size: 1rem;
+  line-height: 1.58;
+  max-width: 920px;
   color: #374151;
 }
 
 .buttons {
-  margin-top: 28px;
+  margin-top: 22px;
   display: flex;
   gap: 12px;
 }
@@ -105,13 +115,15 @@ h2 {
 }
 
 .section {
-  margin-top: 56px;
+  width: 100%;
+  margin-top: 42px;
 }
 
 .section-title {
-  font-size: 2rem;
+  font-size: 1.85rem;
+  line-height: 1.2;
   color: #111827;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 
 .findings {
@@ -124,14 +136,15 @@ h2 {
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 18px;
-  padding: 22px;
+  padding: 18px 20px;
 }
 
 .number {
   display: inline-block;
   color: #7c3aed;
   font-weight: 800;
-  font-size: 1.1rem;
+  font-size: 0.98rem;
+  line-height: 1.25;
   margin-bottom: 10px;
 }
 
@@ -227,6 +240,8 @@ h2 {
 }
 
 .figure-card {
+  width: 100%;
+  max-width: none;
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 22px;
@@ -244,17 +259,19 @@ h2 {
 
 .figure-caption {
   color: #4b5563;
-  line-height: 1.6;
+  line-height: 1.45;
   margin-top: 14px;
-  font-size: 0.98rem;
+  font-size: 0.92rem;
 }
 
 .conclusion-box {
+  width: 100%;
+  max-width: none;
   background: white;
   border: 1px solid #e5e7eb;
   border-left: 6px solid #7c3aed;
   border-radius: 18px;
-  padding: 24px 28px;
+  padding: 20px 24px;
 }
 
 .conclusion-box p {
@@ -265,17 +282,22 @@ h2 {
 }
 
 .section-text {
+  width: 100%;
+  max-width: none;
   color: #374151;
-  line-height: 1.7;
-  font-size: 1.05rem;
-  max-width: 900px;
+  font-size: 0.98rem;
+  line-height: 1.55;
+  margin-top: 0;
+  margin-bottom: 18px;
 }
 
 .table-card {
+  width: 100%;
+  max-width: none;
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 20px;
-  padding: 18px;
+  padding: 12px;
   overflow-x: auto;
   box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
 }
@@ -641,23 +663,27 @@ html {
 }
 
 .analysis-card {
+  width: 100%;
+  max-width: none;
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  border-left: 6px solid #7c3aed;
-  border-radius: 18px;
-  padding: 22px 26px;
-  margin: 22px 0 28px;
+  border-left: 4px solid #7c3aed;
+  border-radius: 16px;
+  padding: 14px 18px;
+  margin: 16px 0 22px;
 }
 
 .analysis-card h3 {
-  margin-top: 0;
+  display: none;
+  margin: 0 0 8px;
   color: #111827;
 }
 
 .analysis-card p {
-  margin-bottom: 0;
+  margin: 0;
   color: #374151;
-  line-height: 1.7;
+  font-size: 0.92rem;
+  line-height: 1.5;
 }
 
 .cm-grid {
@@ -827,26 +853,6 @@ html {
   background: #f3f4f6;
 }
 
-.analysis-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-left: 6px solid #7c3aed;
-  border-radius: 18px;
-  padding: 22px 26px;
-  margin: 22px 0 28px;
-}
-
-.analysis-card h3 {
-  margin-top: 0;
-  color: #111827;
-}
-
-.analysis-card p {
-  margin-bottom: 0;
-  color: #374151;
-  line-height: 1.7;
-}
-
 /* Final override: confusion matrices as compact clickable thumbnails */
 #confusion-matrices .cm-thumb-grid {
   display: grid !important;
@@ -945,10 +951,6 @@ html {
   font-size: 0.88rem !important;
 }
 
-.table-card {
-  padding: 12px !important;
-}
-
 .results-block {
   margin-top: 22px !important;
 }
@@ -956,30 +958,6 @@ html {
 .subsection-title {
   margin-top: 24px !important;
   margin-bottom: 10px !important;
-}
-
-/* Compact body text and section spacing */
-.container {
-  max-width: 1180px !important;
-  padding: 44px 24px !important;
-}
-
-.section {
-  margin-top: 42px !important;
-}
-
-.section-title {
-  font-size: 1.85rem !important;
-  margin-bottom: 14px !important;
-  line-height: 1.2 !important;
-}
-
-.section-text {
-  font-size: 0.98rem !important;
-  line-height: 1.55 !important;
-  max-width: 980px !important;
-  margin-top: 0 !important;
-  margin-bottom: 18px !important;
 }
 
 .context-card {
@@ -1012,106 +990,6 @@ html {
 .finding p,
 .supervision-card p {
   font-size: 0.94rem !important;
-  line-height: 1.5 !important;
-}
-
-.number {
-  font-size: 0.98rem !important;
-  line-height: 1.25 !important;
-}
-
-.analysis-card {
-  padding: 18px 22px !important;
-  margin: 18px 0 24px !important;
-}
-
-.analysis-card h3 {
-  font-size: 1.08rem !important;
-  margin-bottom: 8px !important;
-}
-
-.analysis-card p {
-  font-size: 0.96rem !important;
-  line-height: 1.55 !important;
-}
-
-.figure-caption {
-  font-size: 0.92rem !important;
-  line-height: 1.45 !important;
-}
-
-.conclusion-box {
-  padding: 20px 24px !important;
-}
-
-.conclusion-box p {
-  font-size: 0.98rem !important;
-  line-height: 1.55 !important;
-}
-
-/* Compact hero */
-.hero {
-  padding: 38px 42px !important;
-}
-
-.hero h1,
-h1 {
-  font-size: 2.45rem !important;
-  line-height: 1.12 !important;
-}
-
-.hero h2,
-h2 {
-  font-size: 1.28rem !important;
-  line-height: 1.35 !important;
-}
-
-.summary {
-  font-size: 1rem !important;
-  line-height: 1.58 !important;
-  max-width: 920px !important;
-}
-
-.buttons {
-  margin-top: 22px !important;
-}
-
-/* Compact paper-based analysis cards */
-.analysis-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-left: 5px solid #7c3aed;
-  border-radius: 16px;
-  padding: 16px 20px;
-  margin: 18px 0 22px;
-}
-
-.analysis-card h3 {
-  margin: 0 0 8px;
-  color: #111827;
-  font-size: 1rem;
-}
-
-.analysis-card p {
-  margin: 0;
-  color: #374151;
-  font-size: 0.94rem;
-  line-height: 1.55;
-}
-
-/* Paper-note style for analysis cards */
-.analysis-card h3 {
-  display: none !important;
-}
-
-.analysis-card {
-  border-left: 4px solid #7c3aed !important;
-  padding: 14px 18px !important;
-  margin: 16px 0 22px !important;
-}
-
-.analysis-card p {
-  font-size: 0.92rem !important;
   line-height: 1.5 !important;
 }
 
@@ -1184,41 +1062,27 @@ h2 {
   font-size: 0.80rem !important;
 }
 
-/* Make result-section explanatory text look like paper/table notes */
-#results > .section-text,
-#vad-results > .section-text,
-#entropy-stratified-results > .section-text {
-  font-size: 0.88rem !important;
-  line-height: 1.45 !important;
-  color: #4b5563 !important;
-  max-width: 980px !important;
-  margin-bottom: 14px !important;
-  background: #ffffff !important;
-  border: 1px solid #e5e7eb !important;
-  border-radius: 12px !important;
-  padding: 12px 14px !important;
-}
-
 #results .section-title,
 #vad-results .section-title,
 #entropy-stratified-results .section-title {
   margin-bottom: 10px !important;
 }
 
-/* Cleaner compact caption-style notes for result sections */
+/* Consistent caption-style notes for result sections */
 #results > .section-text,
 #vad-results > .section-text,
 #entropy-stratified-results > .section-text {
-  background: transparent !important;
-  border: none !important;
-  border-left: 3px solid #c4b5fd !important;
-  border-radius: 0 !important;
-  padding: 2px 0 2px 12px !important;
-  font-size: 0.84rem !important;
-  line-height: 1.42 !important;
-  color: #4b5563 !important;
-  max-width: 1050px !important;
-  margin: 0 0 14px !important;
+  width: 100%;
+  max-width: none;
+  margin: 0 0 14px;
+  padding: 2px 0 2px 14px;
+  background: transparent;
+  border: none;
+  border-left: 3px solid #c4b5fd;
+  border-radius: 0;
+  color: #4b5563;
+  font-size: 0.84rem;
+  line-height: 1.5;
 }
 
 .inline-note {
@@ -1227,30 +1091,10 @@ h2 {
   white-space: nowrap;
 }
 
-#results > .section-text {
-  line-height: 1.5 !important;
-  padding-left: 14px !important;
-}
-
 #results > .section-text br {
   display: block;
   content: "";
   margin-top: 6px;
-}
-
-/* Consistent caption/note style for result subsections */
-#vad-results > .section-text,
-#entropy-stratified-results > .section-text {
-  background: transparent !important;
-  border: none !important;
-  border-left: 3px solid #c4b5fd !important;
-  border-radius: 0 !important;
-  padding: 2px 0 2px 14px !important;
-  font-size: 0.84rem !important;
-  line-height: 1.5 !important;
-  color: #4b5563 !important;
-  max-width: 1050px !important;
-  margin: 0 0 14px !important;
 }
 
 #vad-results .analysis-card,
@@ -1258,4 +1102,279 @@ h2 {
 #results .analysis-card {
   margin-top: 14px !important;
   margin-bottom: 20px !important;
+}
+
+/* Motivation: corpus description and annotation example */
+.corpus-readme {
+  width: 100%;
+  max-width: none;
+  margin: 18px 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.readme-row {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 18px;
+  padding: 13px 18px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.readme-row:last-child {
+  border-bottom: none;
+}
+
+.readme-label {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: 0.015em;
+}
+
+.readme-content {
+  font-size: 0.91rem;
+  line-height: 1.52;
+  color: #4b5563;
+}
+
+.readme-content em {
+  color: #111827;
+  font-style: normal;
+  font-weight: 650;
+}
+
+.inline-ref {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 650;
+}
+
+.inline-ref:hover {
+  text-decoration: underline;
+}
+
+.annotation-example {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.35fr);
+  width: 100%;
+  max-width: none;
+  gap: 26px;
+  align-items: stretch;
+  margin: 22px 0 24px;
+  padding: 22px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+}
+
+.annotation-example-copy {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2px 2px 2px 4px;
+}
+
+.example-kicker {
+  margin-bottom: 7px;
+  color: #7c3aed;
+  font-size: 0.76rem;
+  font-weight: 850;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.annotation-example-copy h3 {
+  margin: 0 0 10px;
+  color: #111827;
+  font-size: 1.12rem;
+  line-height: 1.3;
+}
+
+.annotation-example-copy p {
+  margin: 0;
+  color: #4b5563;
+  font-size: 0.91rem;
+  line-height: 1.55;
+}
+
+.annotation-chart {
+  width: 100%;
+  min-width: 0;
+  display: block;
+  padding: 16px 18px 14px;
+  background: #fafaff;
+  border: 1px solid #e9e5ff;
+  border-radius: 13px;
+}
+
+.annotation-chart-title {
+  margin-bottom: 14px;
+  color: #111827;
+  font-size: 0.89rem;
+  font-weight: 800;
+}
+
+.annotation-bar-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  margin: 12px 0;
+}
+
+.annotation-bar-label {
+  color: #374151;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.annotation-bar-track {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  overflow: hidden;
+  background: #eef2f7;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.annotation-segment {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.annotation-bar-values {
+  grid-column: 2;
+  margin-top: -5px;
+  color: #4b5563;
+  font-size: 0.76rem;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.annotation-segment.neutral,
+.annotation-legend i.neutral {
+  background: #9a9a9a;
+}
+
+.annotation-segment.happy,
+.annotation-legend i.happy {
+  background: #f0c94b;
+}
+
+.annotation-segment.angry,
+.annotation-legend i.angry {
+  background: #e95b5b;
+}
+
+.annotation-segment.sad,
+.annotation-legend i.sad {
+  background: #5f87ad;
+}
+
+.annotation-segment.fear,
+.annotation-legend i.fear {
+  background: #9a78bd;
+}
+
+.annotation-segment.disgust,
+.annotation-legend i.disgust {
+  background: #4fae58;
+}
+
+.annotation-segment.contempt,
+.annotation-legend i.contempt {
+  background: #9a7063;
+}
+
+.annotation-segment.surprise,
+.annotation-legend i.surprise {
+  background: #f39a3d;
+}
+
+.annotation-segment.other,
+.annotation-legend i.other {
+  background: #51c3cf;
+}
+
+.annotation-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 13px;
+  margin: 14px 0 0 82px;
+  color: #4b5563;
+  font-size: 0.76rem;
+}
+
+.annotation-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.annotation-legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.annotation-chart-note {
+  margin: 10px 0 0 82px;
+  color: #6b7280;
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 980px) {
+  .annotation-example {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .readme-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .annotation-example {
+    padding: 16px;
+  }
+
+  .annotation-bar-row {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+
+  .annotation-bar-values {
+    grid-column: 1;
+    margin-top: 0;
+  }
+
+  .annotation-legend,
+  .annotation-chart-note {
+    margin-left: 0;
+  }
+
+  .annotation-segment {
+    font-size: 0.67rem;
+  }
 }

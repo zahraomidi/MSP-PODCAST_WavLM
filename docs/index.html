@@ -1,997 +1,1001 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Learning from Annotation Uncertainty</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Learning from Annotation Uncertainty</title>
+<link href="style.css" rel="stylesheet"/>
 </head>
 <body>
-
-  <nav class="top-nav">
-    <a href="#motivation">Motivation</a>
-    <a href="#contributions">Contributions</a>
-    <a href="#supervision">Supervision</a>
-    <a href="#uncertainty">Uncertainty</a>
-    <a href="#architecture">Architecture</a>
-    <a href="#findings">Findings</a>
-    <a href="#confusion-matrices">Figures</a>
-    <a href="#results">Results</a>
-    <a href="#vad-results">VAD</a>
-    <a href="#entropy-stratified-results">Entropy F1</a>
-    <a href="#citation">Citation</a>
-  </nav>
-
-  <main class="container">
-
-    <section class="hero">
-      <p class="tag">Interspeech 2026 · Speech Emotion Recognition</p>
-      <h1>Learning from Annotation Uncertainty</h1>
-      <h2>Entropy-Aware Curriculum for Speech Emotion Recognition</h2>
-
-      <p class="summary">
+<nav class="top-nav">
+<a href="#motivation">Motivation</a>
+<a href="#contributions">Contributions</a>
+<a href="#supervision">Supervision</a>
+<a href="#uncertainty">Uncertainty</a>
+<a href="#architecture">Architecture</a>
+<a href="#findings">Findings</a>
+<a href="#confusion-matrices">Figures</a>
+<a href="#results">Results</a>
+<a href="#vad-results">VAD</a>
+<a href="#entropy-stratified-results">Entropy F1</a>
+<a href="#citation">Citation</a>
+</nav>
+<main class="container">
+<section class="hero">
+<p class="tag">Interspeech 2026 · Speech Emotion Recognition</p>
+<h1>Learning from Annotation Uncertainty</h1>
+<h2>Entropy-Aware Curriculum for Speech Emotion Recognition</h2>
+<p class="summary">
         Speech emotion recognition commonly relies on hard consensus labels that collapse annotator disagreement into a single category.
         This project studies distribution-based supervision in a WavLM-Base SER system on the 9-class MSP-Podcast 2.0 benchmark,
         comparing hard consensus training with targets derived from primary and merged primary-secondary annotator vote distributions.
       </p>
+<div class="buttons">
+<a class="button" href="https://arxiv.org/abs/2606.27536">arXiv</a>
+<a class="button secondary" href="https://arxiv.org/pdf/2606.27536">Paper PDF</a>
+<a class="button secondary" href="https://github.com/zahraomidi/MSP-PODCAST_WavLM">Code</a>
+</div>
+</section>
+<section class="section intro-context" id="motivation">
+<h2 class="section-title">Motivation</h2>
+<p class="section-text">
+        MSP-Podcast 2.0 is annotated through multiple listener judgments rather than a single ground-truth emotion label. Each listener provides one primary categorical emotion, optional secondary emotion labels, and dimensional ratings for activation, valence, and dominance. The final consensus label summarizes these annotations, but the individual responses contain richer information about how listeners perceived the same utterance.
+      </p>
+<div class="corpus-readme">
+<div class="readme-row">
+<div class="readme-label">Annotation process</div>
+<div class="readme-content">
+            For each utterance, multiple workers independently annotate perceived emotion. The primary emotion requires a single categorical choice, while the secondary emotion field allows multiple selections. This annotation design records cases where emotion perception extends beyond one dominant category.
+          </div>
+</div>
+<div class="readme-row">
+<div class="readme-label">Emotion space</div>
+<div class="readme-content">
+            We retain the full 9-class categorical setup used in the paper: <em>Neutral</em>, <em>Happy</em>, <em>Angry</em>, <em>Sad</em>, <em>Fear</em>, <em>Disgust</em>, <em>Contempt</em>, <em>Surprise</em>, and <em>Other</em>. Keeping the full label space avoids artificially reshaping the annotation distribution.
+          </div>
+</div>
+<div class="readme-row">
+<div class="readme-label">Consensus view</div>
+<div class="readme-content">
+            Conventional SER training reduces the listener responses to one hard target, typically the plurality-vote primary emotion. This simplifies the learning problem, but removes information about disagreement among listeners and about secondary perceived emotions.
+          </div>
+</div>
+<div class="readme-row">
+<div class="readme-label">Distributional view</div>
+<div class="readme-content">
+            We instead treat the collection of listener responses as a supervision signal. Primary vote distributions preserve disagreement in the main emotion judgment, while merged primary-secondary distributions incorporate secondary perceptual evidence.
+          </div>
+</div>
+<div class="readme-row">
+<div class="readme-label">Hypothesis</div>
+<div class="readme-content">
+            Our hypothesis is that the full annotation pattern is informative. Disagreement, secondary labels, and entropy are modeled as measurable properties of emotion perception rather than treated only as annotation noise.
+          </div>
+</div>
+</div>
+<div class="annotation-example" aria-labelledby="annotation-example-title">
+  <div class="annotation-example-copy">
+    <div class="example-kicker">Illustrative example</div>
+    <h3 id="annotation-example-title">One utterance, three supervision views</h3>
+    <p>
+      This example illustrates the difference between hard, primary, and merged supervision; the displayed
+      probabilities are illustrative rather than an actual corpus sample.
+    </p>
+  </div>
 
-      <div class="buttons">
-        <a href="https://arxiv.org/abs/2606.27536" class="button">arXiv</a>
-        <a href="https://arxiv.org/pdf/2606.27536" class="button secondary">Paper PDF</a>
-        <a href="https://github.com/zahraomidi/MSP-PODCAST_WavLM" class="button secondary">Code</a>
-      </div>
-    </section>
+  <div class="annotation-chart"
+     role="img"
+     aria-label="Illustrative comparison of hard, primary, and merged emotion targets">
 
+  <div class="annotation-chart-title">Emotion target distribution</div>
 
-    <section class="section intro-context" id="motivation">
-      <h2 class="section-title">Emotion Ambiguity and Annotation Uncertainty</h2>
-      <div class="context-card">
-        <p>
-          Emotion perception is subjective and context dependent. <a href="https://doi.org/10.1177/1529100619832930">Barrett et al. (2019)</a> reconsidered the common view that emotion categories are reliably signaled by distinctive expressions, highlighting limited reliability, lack of specificity, and limited generalizability in how emotions are expressed and perceived.
-        </p>
-        <p>
-          This ambiguity is also present in speech emotion recognition. Multi-rater corpora such as MSP-Podcast 2.0 contain annotator disagreement, mixed emotional interpretations, and label variability across speakers and contexts. Collapsing these annotations into a single hard consensus label discards this information and obscures ambiguity patterns present in the data.
-        </p>
-        <p>
-          Our findings support treating annotation disagreement as structured perceptual information rather than label noise. Distribution-based supervision better preserves this ambiguity, improves alignment with annotator vote distributions, and reduces reliance on the residual <em>Other</em> category compared with hard consensus training.
-        </p>
-      </div>
-    </section>
+  <div class="annotation-bar-row">
+    <div class="annotation-bar-label">Hard</div>
+    <div class="annotation-bar-track">
+      <div class="annotation-segment neutral" style="width:100%"></div>
+    </div>
+    <div class="annotation-bar-values">Neutral 1.00</div>
+  </div>
 
-    <section class="cards">
-      <div class="card">
-        <h3>Problem</h3>
-        <p>Hard consensus labels collapse annotator disagreement into a single emotion category.</p>
-      </div>
-      <div class="card">
-        <h3>Supervision</h3>
-        <p>We compare hard consensus labels with primary and merged primary-secondary annotator vote distributions.</p>
-      </div>
-      <div class="card">
-        <h3>Evaluation</h3>
-        <p>We evaluate categorical emotion recognition, dimensional VAD prediction, and alignment with annotator vote distributions.</p>
-      </div>
-    </section>
+  <div class="annotation-bar-row">
+    <div class="annotation-bar-label">Primary</div>
+    <div class="annotation-bar-track">
+      <div class="annotation-segment neutral" style="width:80%"></div>
+      <div class="annotation-segment surprise" style="width:20%"></div>
+    </div>
+    <div class="annotation-bar-values">Neutral 0.80 · Surprise 0.20</div>
+  </div>
 
-    <section class="section">
-      <h2 class="section-title">Conclusion</h2>
-      <div class="conclusion-box">
-        <p>
-          These findings suggest that SER systems should move beyond hard consensus labels toward distributional targets that better reflect listener disagreement.
-        </p>
-      </div>
-    </section>
+  <div class="annotation-bar-row">
+    <div class="annotation-bar-label">Merged</div>
+    <div class="annotation-bar-track">
+      <div class="annotation-segment neutral" style="width:70%"></div>
+      <div class="annotation-segment sad" style="width:10%"></div>
+      <div class="annotation-segment surprise" style="width:20%"></div>
+    </div>
+    <div class="annotation-bar-values">Neutral 0.70 · Sad 0.10 · Surprise 0.20</div>
+  </div>
 
-<section class="section" id="contributions">
-      <h2 class="section-title">Contributions</h2>
-      <p class="section-text">
-        This study examines distribution-based supervision for speech emotion recognition by modeling annotator vote distributions rather than relying only on hard consensus labels.
+  <div class="annotation-legend" aria-hidden="true">
+    <span><i class="neutral"></i>Neutral</span>
+    <span><i class="sad"></i>Sad</span>
+    <span><i class="surprise"></i>Surprise</span>
+  </div>
+
+  <p class="annotation-chart-note">
+    Values are illustrative and are used only to show how the supervision target changes.
+  </p>
+</div>
+</div>
+<p class="section-text">
+        This motivation is consistent with <a class="inline-ref" href="#citation">Barrett et al. (2019)</a>, which cautions against assuming a fixed one-to-one mapping between expressive behavior and discrete emotion categories. In this paper, we therefore study whether SER models should learn only the consensus category or also learn from the uncertainty already present in the MSP-Podcast annotation process.
       </p>
 
-      <div class="findings">
-        <div class="finding">
-          <span class="number">Distributional supervision</span>
-          <p>We compare hard consensus training with targets derived from primary and merged primary-secondary annotator vote distributions.</p>
-        </div>
-
-        <div class="finding">
-          <span class="number">Entropy-aware curriculum</span>
-          <p>We evaluate entropy filtering, entropy weighting, and reverse entropy curricula for ambiguity-aware training.</p>
-        </div>
-
-        <div class="finding">
-          <span class="number">Multitask SER</span>
-          <p>We use a WavLM-Base system that jointly models categorical emotion and dimensional valence, arousal, and dominance.</p>
-        </div>
-
-        <div class="finding">
-          <span class="number">Uncertainty analysis</span>
-          <p>We analyze distributional alignment, entropy-stratified performance, and the role of the residual <em>Other</em> category.</p>
-        </div>
-      </div>
-    </section>
-
+</section>
+<section class="section">
+<h2 class="section-title">Conclusion</h2>
+<div class="conclusion-box">
+<p>
+          These findings suggest that SER systems should move beyond hard consensus labels toward distributional targets that better reflect listener disagreement.
+        </p>
+</div>
+</section>
+<section class="section" id="contributions">
+<h2 class="section-title">Contributions</h2>
+<p class="section-text">
+        This study examines distribution-based supervision for speech emotion recognition by modeling annotator vote distributions rather than relying only on hard consensus labels.
+      </p>
+<div class="findings">
+<div class="finding">
+<span class="number">Distributional supervision</span>
+<p>We compare hard consensus training with targets derived from primary and merged primary-secondary annotator vote distributions.</p>
+</div>
+<div class="finding">
+<span class="number">Entropy-aware curriculum</span>
+<p>We evaluate entropy filtering, entropy weighting, and reverse entropy curricula for ambiguity-aware training.</p>
+</div>
+<div class="finding">
+<span class="number">Multitask SER</span>
+<p>We use a WavLM-Base system that jointly models categorical emotion and dimensional valence, arousal, and dominance.</p>
+</div>
+<div class="finding">
+<span class="number">Uncertainty analysis</span>
+<p>We analyze distributional alignment, entropy-stratified performance, and the role of the residual <em>Other</em> category.</p>
+</div>
+</div>
+</section>
 <section class="section" id="supervision">
-      <h2 class="section-title">Supervision Targets</h2>
-      <p class="section-text">
+<h2 class="section-title">Supervision Targets</h2>
+<p class="section-text">
         We compare hard consensus labels with distributional targets derived from annotator vote distributions.
         Primary and merged targets provide alternative forms of categorical supervision while preserving different amounts of annotation uncertainty.
       </p>
-
-      <div class="supervision-grid">
-        <div class="supervision-card">
-          <h3>Hard</h3>
-          <p>Consensus emotion label used as a one-hot categorical target.</p>
-        </div>
-
-        <div class="supervision-card">
-          <h3>Primary</h3>
-          <p>Distribution over emotion categories derived from primary annotator vote counts.</p>
-        </div>
-
-        <div class="supervision-card">
-          <h3>M90</h3>
-          <p>Merged primary-secondary distribution using a 0.9P/0.1S target setting.</p>
-        </div>
-
-        <div class="supervision-card">
-          <h3>M80</h3>
-          <p>Merged primary-secondary distribution using a 0.8P/0.2S target setting.</p>
-        </div>
-      </div>
-          <div class="analysis-card supervision-analysis">
-        <h3>Analysis</h3>
-        <p>
+<div class="supervision-grid">
+<div class="supervision-card">
+<h3>Hard</h3>
+<p>Consensus emotion label used as a one-hot categorical target.</p>
+</div>
+<div class="supervision-card">
+<h3>Primary</h3>
+<p>Distribution over emotion categories derived from primary annotator vote counts.</p>
+</div>
+<div class="supervision-card">
+<h3>M90</h3>
+<p>Merged primary-secondary distribution using a 0.9P/0.1S target setting.</p>
+</div>
+<div class="supervision-card">
+<h3>M80</h3>
+<p>Merged primary-secondary distribution using a 0.8P/0.2S target setting.</p>
+</div>
+</div>
+<div class="analysis-card supervision-analysis">
+<h3>Analysis</h3>
+<p>
           The supervision targets differ in how they represent annotator disagreement. Hard supervision assigns each utterance to a single consensus emotion, while primary and merged distributions retain probability mass across multiple emotion categories. This allows the categorical objective to model disagreement as part of the target distribution rather than treating it only as label noise.
         </p>
-      </div>
-    </section>
-
+</div>
+</section>
 <section class="section" id="uncertainty">
-      <h2 class="section-title">Supervision and Annotation Uncertainty</h2>
-      <div class="figure-card">
-        <img src="assets/entropy_by_class.png" alt="Entropy by emotion class for primary and merged vote distributions">
-        <div class="figure-caption">
-          <strong>Per-class annotation entropy.</strong> Entropy is shown under primary and merged primary-secondary vote distributions. Merged targets use 0.9P/0.1S and 0.8P/0.2S settings.
+<h2 class="section-title">Supervision and Annotation Uncertainty</h2>
+<div class="figure-card">
+<img alt="Entropy by emotion class for primary and merged vote distributions" src="assets/entropy_by_class.png"/>
+<div class="figure-caption">
+<strong>Per-class annotation entropy.</strong> Entropy is shown under primary and merged primary-secondary vote distributions. Merged targets use 0.9P/0.1S and 0.8P/0.2S settings.
         </div>
-      </div>
-          <div class="analysis-card uncertainty-analysis">
-        <h3>Analysis</h3>
-        <p>
+</div>
+<div class="analysis-card uncertainty-analysis">
+<h3>Analysis</h3>
+<p>
           Annotation entropy is class-dependent rather than uniform across MSP-Podcast 2.0. Merging primary and secondary votes broadens the target distributions and increases high-entropy tail mass, especially for more ambiguous categories. This motivates treating entropy as an annotation-derived property for ambiguity-stratified evaluation and curriculum design.
         </p>
-      </div>
-    </section>
-
+</div>
+</section>
 <section class="section" id="architecture">
-      <h2 class="section-title">Model Architecture</h2>
-      <div class="figure-card">
-        <img src="assets/architecture.jpg" alt="WavLM TC-GRU architecture for speech emotion recognition">
-        <div class="figure-caption">
-          <strong>Model architecture.</strong> WavLM-Base is used as the backbone, followed by a TC-GRU model. The model jointly predicts a discrete emotion distribution and dimensional emotion attributes including valence, activation, and dominance.
+<h2 class="section-title">Model Architecture</h2>
+<div class="figure-card">
+<img alt="WavLM TC-GRU architecture for speech emotion recognition" src="assets/architecture.jpg"/>
+<div class="figure-caption">
+<strong>Model architecture.</strong> WavLM-Base is used as the backbone, followed by a TC-GRU model. The model jointly predicts a discrete emotion distribution and dimensional emotion attributes including valence, activation, and dominance.
         </div>
-      </div>
-    </section>
-
+</div>
+</section>
 <section class="section" id="findings">
-      <h2 class="section-title">Main Findings</h2>
-      <p class="section-text">
+<h2 class="section-title">Main Findings</h2>
+<p class="section-text">
         Distributional supervision changes what the model learns from ambiguous annotations. We evaluate both categorical performance and alignment with annotator vote distributions.
       </p>
-
-      <div class="findings">
-        <div class="finding">
-          <span class="number">Distributional alignment</span>
-          <p>Distributional objectives consistently improve alignment with annotator vote distributions, yielding lower JSD and KLD.</p>
-        </div>
-
-        <div class="finding">
-          <span class="number">Hard supervision</span>
-          <p>Gains under hard supervision are partly driven by assigning ambiguous samples to the residual <em>Other</em> category.</p>
-        </div>
-
-        <div class="finding">
-          <span class="number">Entropy-stratified evaluation</span>
-          <p>High-ambiguity utterances remain challenging under both hard and distribution-based supervision.</p>
-        </div>
-
-        <div class="finding">
-          <span class="number">Perceptual uncertainty</span>
-          <p>Distribution-based supervision provides more faithful modeling of perceptual uncertainty than hard consensus labels.</p>
-        </div>
-      </div>
-    </section>
-
-
+<div class="findings">
+<div class="finding">
+<span class="number">Distributional alignment</span>
+<p>Distributional objectives consistently improve alignment with annotator vote distributions, yielding lower JSD and KLD.</p>
+</div>
+<div class="finding">
+<span class="number">Hard supervision</span>
+<p>Gains under hard supervision are partly driven by assigning ambiguous samples to the residual <em>Other</em> category.</p>
+</div>
+<div class="finding">
+<span class="number">Entropy-stratified evaluation</span>
+<p>High-ambiguity utterances remain challenging under both hard and distribution-based supervision.</p>
+</div>
+<div class="finding">
+<span class="number">Perceptual uncertainty</span>
+<p>Distribution-based supervision provides more faithful modeling of perceptual uncertainty than hard consensus labels.</p>
+</div>
+</div>
+</section>
 <section class="section" id="confusion-matrices">
-      <h2 class="section-title">Confusion Matrices Across Supervision Settings</h2>
-      <p class="section-text">
+<h2 class="section-title">Confusion Matrices Across Supervision Settings</h2>
+<p class="section-text">
         Confusion matrices are shown for the supervision targets and training settings reported in the paper. Each thumbnail can be opened in a new tab for full-resolution inspection.
       </p>
-
-      <div class="analysis-card">
-        <h3>Confusion-matrix analysis</h3>
-        <p>
+<div class="analysis-card">
+<h3>Confusion-matrix analysis</h3>
+<p>
           The confusion matrices show how supervision choice affects class-wise prediction behavior. Hard-label systems concentrate many ambiguous samples into dominant classes and the residual <em>Other</em> category, while distribution-based objectives redistribute uncertainty across structured emotion categories. Entropy-aware curricula further change these prediction patterns, although low-resource and high-ambiguity classes such as <em>Fear</em>, <em>Disgust</em>, <em>Contempt</em>, and <em>Surprise</em> remain challenging. This supports the paper's finding that distributional supervision provides a more faithful model of annotator disagreement than hard consensus labels.
         </p>
-      </div>
-
-
-
-      <h3 class="subsection-title">Test1</h3>
-      <div class="cm-thumb-grid">
-        <figure class="cm-thumb-card">
-          <a href="assets/confusion_matrices/test1/test1_h_ce_confusion.png">
-            <img src="assets/confusion_matrices/test1/test1_h_ce_confusion.png" alt="Hard + CE confusion matrix on Test1">
-          </a>
-          <figcaption>Hard + CE</figcaption>
-        </figure>
-        <figure class="cm-thumb-card">
-          <a href="assets/confusion_matrices/test1/test1_h_cb_confusion.png">
-            <img src="assets/confusion_matrices/test1/test1_h_cb_confusion.png" alt="Hard + CBCE confusion matrix on Test1">
-          </a>
-          <figcaption>Hard + CBCE</figcaption>
-        </figure>
-        <figure class="cm-thumb-card">
-          <a href="assets/confusion_matrices/test1/test1_p_kld_confusion.png">
-            <img src="assets/confusion_matrices/test1/test1_p_kld_confusion.png" alt="Primary + KLD confusion matrix on Test1">
-          </a>
-          <figcaption>Primary + KLD</figcaption>
-        </figure>
-        <figure class="cm-thumb-card">
-          <a href="assets/confusion_matrices/test1/test1_ml_kld_confusion.png">
-            <img src="assets/confusion_matrices/test1/test1_ml_kld_confusion.png" alt="M80 + KLD confusion matrix on Test1">
-          </a>
-          <figcaption>M80 + KLD</figcaption>
-        </figure>
-        <figure class="cm-thumb-card">
-          <a href="assets/confusion_matrices/test1/test1_mh_kld_confusion.png">
-            <img src="assets/confusion_matrices/test1/test1_mh_kld_confusion.png" alt="M90 + KLD confusion matrix on Test1">
-          </a>
-          <figcaption>M90 + KLD</figcaption>
-        </figure>
-        <figure class="cm-thumb-card">
-          <a href="assets/confusion_matrices/test1/test1_mh_wkld_confusion.png">
-            <img src="assets/confusion_matrices/test1/test1_mh_wkld_confusion.png" alt="M90 + WKLD confusion matrix on Test1">
-          </a>
-          <figcaption>M90 + WKLD</figcaption>
-        </figure>
-        <figure class="cm-thumb-card">
-          <a href="assets/confusion_matrices/test1/test1_mh_f_confusion.png">
-            <img src="assets/confusion_matrices/test1/test1_mh_f_confusion.png" alt="M90 + Filter confusion matrix on Test1">
-          </a>
-          <figcaption>M90 + Filter</figcaption>
-        </figure>
-        <figure class="cm-thumb-card">
-          <a href="assets/confusion_matrices/test1/test1_mh_rf_confusion.png">
-            <img src="assets/confusion_matrices/test1/test1_mh_rf_confusion.png" alt="M90 + Rev-Filter confusion matrix on Test1">
-          </a>
-          <figcaption>M90 + Rev-Filter</figcaption>
-        </figure>
-        <figure class="cm-thumb-card">
-          <a href="assets/confusion_matrices/test1/test1_mh_w_confusion.png">
-            <img src="assets/confusion_matrices/test1/test1_mh_w_confusion.png" alt="M90 + Weight confusion matrix on Test1">
-          </a>
-          <figcaption>M90 + Weight</figcaption>
-        </figure>
-        <figure class="cm-thumb-card">
-          <a href="assets/confusion_matrices/test1/test1_mh_rw_confusion.png">
-            <img src="assets/confusion_matrices/test1/test1_mh_rw_confusion.png" alt="M90 + Rev-Weight confusion matrix on Test1">
-          </a>
-          <figcaption>M90 + Rev-Weight</figcaption>
-        </figure>
-      </div>
-
-
-      <h3 class="subsection-title">Test2</h3>
-      <div class="cm-thumb-grid">
-        <figure class="cm-thumb-card">
-          <a href="assets/confusion_matrices/test2/test2_h_ce_confusion.png">
-            <img src="assets/confusion_matrices/test2/test2_h_ce_confusion.png" alt="Hard + CE confusion matrix on Test2">
-          </a>
-          <figcaption>Hard + CE</figcaption>
-        </figure>
-        <figure class="cm-thumb-card">
-          <a href="assets/confusion_matrices/test2/test2_h_cb_confusion.png">
-            <img src="assets/confusion_matrices/test2/test2_h_cb_confusion.png" alt="Hard + CBCE confusion matrix on Test2">
-          </a>
-          <figcaption>Hard + CBCE</figcaption>
-        </figure>
-        <figure class="cm-thumb-card">
-          <a href="assets/confusion_matrices/test2/test2_p_kld_confusion.png">
-            <img src="assets/confusion_matrices/test2/test2_p_kld_confusion.png" alt="Primary + KLD confusion matrix on Test2">
-          </a>
-          <figcaption>Primary + KLD</figcaption>
-        </figure>
-        <figure class="cm-thumb-card">
-          <a href="assets/confusion_matrices/test2/test2_ml_kld_confusion.png">
-            <img src="assets/confusion_matrices/test2/test2_ml_kld_confusion.png" alt="M80 + KLD confusion matrix on Test2">
-          </a>
-          <figcaption>M80 + KLD</figcaption>
-        </figure>
-        <figure class="cm-thumb-card">
-          <a href="assets/confusion_matrices/test2/test2_mh_kld_confusion.png">
-            <img src="assets/confusion_matrices/test2/test2_mh_kld_confusion.png" alt="M90 + KLD confusion matrix on Test2">
-          </a>
-          <figcaption>M90 + KLD</figcaption>
-        </figure>
-        <figure class="cm-thumb-card">
-          <a href="assets/confusion_matrices/test2/test2_mh_wkld_confusion.png">
-            <img src="assets/confusion_matrices/test2/test2_mh_wkld_confusion.png" alt="M90 + WKLD confusion matrix on Test2">
-          </a>
-          <figcaption>M90 + WKLD</figcaption>
-        </figure>
-        <figure class="cm-thumb-card">
-          <a href="assets/confusion_matrices/test2/test2_mh_f_confusion.png">
-            <img src="assets/confusion_matrices/test2/test2_mh_f_confusion.png" alt="M90 + Filter confusion matrix on Test2">
-          </a>
-          <figcaption>M90 + Filter</figcaption>
-        </figure>
-        <figure class="cm-thumb-card">
-          <a href="assets/confusion_matrices/test2/test2_mh_rf_confusion.png">
-            <img src="assets/confusion_matrices/test2/test2_mh_rf_confusion.png" alt="M90 + Rev-Filter confusion matrix on Test2">
-          </a>
-          <figcaption>M90 + Rev-Filter</figcaption>
-        </figure>
-        <figure class="cm-thumb-card">
-          <a href="assets/confusion_matrices/test2/test2_mh_w_confusion.png">
-            <img src="assets/confusion_matrices/test2/test2_mh_w_confusion.png" alt="M90 + Weight confusion matrix on Test2">
-          </a>
-          <figcaption>M90 + Weight</figcaption>
-        </figure>
-        <figure class="cm-thumb-card">
-          <a href="assets/confusion_matrices/test2/test2_mh_rw_confusion.png">
-            <img src="assets/confusion_matrices/test2/test2_mh_rw_confusion.png" alt="M90 + Rev-Weight confusion matrix on Test2">
-          </a>
-          <figcaption>M90 + Rev-Weight</figcaption>
-        </figure>
-      </div>
-
-    </section>
-
-
+</div>
+<h3 class="subsection-title">Test1</h3>
+<div class="cm-thumb-grid">
+<figure class="cm-thumb-card">
+<a href="assets/confusion_matrices/test1/test1_h_ce_confusion.png">
+<img alt="Hard + CE confusion matrix on Test1" src="assets/confusion_matrices/test1/test1_h_ce_confusion.png"/>
+</a>
+<figcaption>Hard + CE</figcaption>
+</figure>
+<figure class="cm-thumb-card">
+<a href="assets/confusion_matrices/test1/test1_h_cb_confusion.png">
+<img alt="Hard + CBCE confusion matrix on Test1" src="assets/confusion_matrices/test1/test1_h_cb_confusion.png"/>
+</a>
+<figcaption>Hard + CBCE</figcaption>
+</figure>
+<figure class="cm-thumb-card">
+<a href="assets/confusion_matrices/test1/test1_p_kld_confusion.png">
+<img alt="Primary + KLD confusion matrix on Test1" src="assets/confusion_matrices/test1/test1_p_kld_confusion.png"/>
+</a>
+<figcaption>Primary + KLD</figcaption>
+</figure>
+<figure class="cm-thumb-card">
+<a href="assets/confusion_matrices/test1/test1_ml_kld_confusion.png">
+<img alt="M80 + KLD confusion matrix on Test1" src="assets/confusion_matrices/test1/test1_ml_kld_confusion.png"/>
+</a>
+<figcaption>M80 + KLD</figcaption>
+</figure>
+<figure class="cm-thumb-card">
+<a href="assets/confusion_matrices/test1/test1_mh_kld_confusion.png">
+<img alt="M90 + KLD confusion matrix on Test1" src="assets/confusion_matrices/test1/test1_mh_kld_confusion.png"/>
+</a>
+<figcaption>M90 + KLD</figcaption>
+</figure>
+<figure class="cm-thumb-card">
+<a href="assets/confusion_matrices/test1/test1_mh_wkld_confusion.png">
+<img alt="M90 + WKLD confusion matrix on Test1" src="assets/confusion_matrices/test1/test1_mh_wkld_confusion.png"/>
+</a>
+<figcaption>M90 + WKLD</figcaption>
+</figure>
+<figure class="cm-thumb-card">
+<a href="assets/confusion_matrices/test1/test1_mh_f_confusion.png">
+<img alt="M90 + Filter confusion matrix on Test1" src="assets/confusion_matrices/test1/test1_mh_f_confusion.png"/>
+</a>
+<figcaption>M90 + Filter</figcaption>
+</figure>
+<figure class="cm-thumb-card">
+<a href="assets/confusion_matrices/test1/test1_mh_rf_confusion.png">
+<img alt="M90 + Rev-Filter confusion matrix on Test1" src="assets/confusion_matrices/test1/test1_mh_rf_confusion.png"/>
+</a>
+<figcaption>M90 + Rev-Filter</figcaption>
+</figure>
+<figure class="cm-thumb-card">
+<a href="assets/confusion_matrices/test1/test1_mh_w_confusion.png">
+<img alt="M90 + Weight confusion matrix on Test1" src="assets/confusion_matrices/test1/test1_mh_w_confusion.png"/>
+</a>
+<figcaption>M90 + Weight</figcaption>
+</figure>
+<figure class="cm-thumb-card">
+<a href="assets/confusion_matrices/test1/test1_mh_rw_confusion.png">
+<img alt="M90 + Rev-Weight confusion matrix on Test1" src="assets/confusion_matrices/test1/test1_mh_rw_confusion.png"/>
+</a>
+<figcaption>M90 + Rev-Weight</figcaption>
+</figure>
+</div>
+<h3 class="subsection-title">Test2</h3>
+<div class="cm-thumb-grid">
+<figure class="cm-thumb-card">
+<a href="assets/confusion_matrices/test2/test2_h_ce_confusion.png">
+<img alt="Hard + CE confusion matrix on Test2" src="assets/confusion_matrices/test2/test2_h_ce_confusion.png"/>
+</a>
+<figcaption>Hard + CE</figcaption>
+</figure>
+<figure class="cm-thumb-card">
+<a href="assets/confusion_matrices/test2/test2_h_cb_confusion.png">
+<img alt="Hard + CBCE confusion matrix on Test2" src="assets/confusion_matrices/test2/test2_h_cb_confusion.png"/>
+</a>
+<figcaption>Hard + CBCE</figcaption>
+</figure>
+<figure class="cm-thumb-card">
+<a href="assets/confusion_matrices/test2/test2_p_kld_confusion.png">
+<img alt="Primary + KLD confusion matrix on Test2" src="assets/confusion_matrices/test2/test2_p_kld_confusion.png"/>
+</a>
+<figcaption>Primary + KLD</figcaption>
+</figure>
+<figure class="cm-thumb-card">
+<a href="assets/confusion_matrices/test2/test2_ml_kld_confusion.png">
+<img alt="M80 + KLD confusion matrix on Test2" src="assets/confusion_matrices/test2/test2_ml_kld_confusion.png"/>
+</a>
+<figcaption>M80 + KLD</figcaption>
+</figure>
+<figure class="cm-thumb-card">
+<a href="assets/confusion_matrices/test2/test2_mh_kld_confusion.png">
+<img alt="M90 + KLD confusion matrix on Test2" src="assets/confusion_matrices/test2/test2_mh_kld_confusion.png"/>
+</a>
+<figcaption>M90 + KLD</figcaption>
+</figure>
+<figure class="cm-thumb-card">
+<a href="assets/confusion_matrices/test2/test2_mh_wkld_confusion.png">
+<img alt="M90 + WKLD confusion matrix on Test2" src="assets/confusion_matrices/test2/test2_mh_wkld_confusion.png"/>
+</a>
+<figcaption>M90 + WKLD</figcaption>
+</figure>
+<figure class="cm-thumb-card">
+<a href="assets/confusion_matrices/test2/test2_mh_f_confusion.png">
+<img alt="M90 + Filter confusion matrix on Test2" src="assets/confusion_matrices/test2/test2_mh_f_confusion.png"/>
+</a>
+<figcaption>M90 + Filter</figcaption>
+</figure>
+<figure class="cm-thumb-card">
+<a href="assets/confusion_matrices/test2/test2_mh_rf_confusion.png">
+<img alt="M90 + Rev-Filter confusion matrix on Test2" src="assets/confusion_matrices/test2/test2_mh_rf_confusion.png"/>
+</a>
+<figcaption>M90 + Rev-Filter</figcaption>
+</figure>
+<figure class="cm-thumb-card">
+<a href="assets/confusion_matrices/test2/test2_mh_w_confusion.png">
+<img alt="M90 + Weight confusion matrix on Test2" src="assets/confusion_matrices/test2/test2_mh_w_confusion.png"/>
+</a>
+<figcaption>M90 + Weight</figcaption>
+</figure>
+<figure class="cm-thumb-card">
+<a href="assets/confusion_matrices/test2/test2_mh_rw_confusion.png">
+<img alt="M90 + Rev-Weight confusion matrix on Test2" src="assets/confusion_matrices/test2/test2_mh_rw_confusion.png"/>
+</a>
+<figcaption>M90 + Rev-Weight</figcaption>
+</figure>
+</div>
+</section>
 <section class="section" id="results">
-      <h2 class="section-title">Results</h2>
-      <p class="section-text">
+<h2 class="section-title">Results</h2>
+<p class="section-text">
         Categorical performance and distributional alignment are reported on MSP-Podcast 2.0 Test1/Test2.
         Hard = hard consensus; Primary = primary distribution; Merged 0.8P/0.2S and 0.9P/0.1S correspond to merged primary-secondary targets.
         CE/CBCE = cross-entropy/class-balanced CE; KLD/WKLD = unweighted/weighted KLD;
         entropy filtering/weighting and reverse entropy curricula are evaluated. M-F1 and UAR are reported in percent.
       </p>
-
-
-
-      <div class="results-block">
-        <h3 class="subsection-title">Test1</h3>
-        <div class="table-card">
-          <table class="results-table paper-results-table">
-            <thead>
-              <tr>
-                <th>Target</th>
-                <th>Setting</th>
-                <th>M-F1</th>
-                <th>UAR</th>
-                <th>JSD↓</th>
-                <th>KLD↓</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class='target-name'>Hard</td>
-                <td class='setting-name'>CE</td>
-                <td class=''><span class='metric-value'>28.69</span><br><span class='metric-ci'>[28.29, 32.57]</span></td>
-                <td class=''><span class='metric-value'>29.29</span><br><span class='metric-ci'>[28.88, 29.69]</span></td>
-                <td class=''><span class='metric-value'>0.322</span><br><span class='metric-ci'>[0.320, 0.325]</span></td>
-                <td class=''><span class='metric-value'>1.672</span><br><span class='metric-ci'>[1.655, 1.688]</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Hard</td>
-                <td class='setting-name'>CBCE</td>
-                <td class=''><span class='metric-value'>28.36</span><br><span class='metric-ci'>[27.83, 28.93]</span></td>
-                <td class=''><span class='metric-value'>27.11</span><br><span class='metric-ci'>[26.68, 27.55]</span></td>
-                <td class=''><span class='metric-value'>0.329</span><br><span class='metric-ci'>[0.327, 0.331]</span></td>
-                <td class=''><span class='metric-value'>1.602</span><br><span class='metric-ci'>[1.587, 1.617]</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Primary</td>
-                <td class='setting-name'>KLD</td>
-                <td class=''><span class='metric-value'>28.36</span><br><span class='metric-ci'>[27.87, 28.84]</span></td>
-                <td class=''><span class='metric-value'>28.92</span><br><span class='metric-ci'>[28.57, 29.26]</span></td>
-                <td class=''><span class='metric-value'>0.203</span><br><span class='metric-ci'>[0.202, 0.204]</span></td>
-                <td class=''><span class='metric-value'>0.851</span><br><span class='metric-ci'>[0.845, 0.857]</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.8P/0.2S</td>
-                <td class='setting-name'>KLD</td>
-                <td class=''><span class='metric-value'>29.37</span><br><span class='metric-ci'>[28.95, 29.79]</span></td>
-                <td class=''><span class='metric-value'>32.90</span><br><span class='metric-ci'>[32.20, 33.61]</span></td>
-                <td class=''><span class='metric-value'>0.235</span><br><span class='metric-ci'>[0.234, 0.236]</span></td>
-                <td class=''><span class='metric-value'>0.928</span><br><span class='metric-ci'>[0.923, 0.933]</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>KLD</td>
-                <td class=''><span class='metric-value'>29.22</span><br><span class='metric-ci'>[28.69, 29.73]</span></td>
-                <td class=''><span class='metric-value'>29.07</span><br><span class='metric-ci'>[28.69, 29.47]</span></td>
-                <td class=''><span class='metric-value'>0.189</span><br><span class='metric-ci'>[0.188, 0.190]</span></td>
-                <td class=''><span class='metric-value'>0.809</span><br><span class='metric-ci'>[0.803, 0.815]</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Weighted KLD</td>
-                <td class=''><span class='metric-value'>30.39</span><br><span class='metric-ci'>[29.94, 30.83]</span></td>
-                <td class='best-cell'><span class='metric-value'>33.06</span><br><span class='metric-ci'>[32.38, 33.74]</span></td>
-                <td class=''><span class='metric-value'>0.228</span><br><span class='metric-ci'>[0.227, 0.229]</span></td>
-                <td class=''><span class='metric-value'>0.919</span><br><span class='metric-ci'>[0.913, 0.924]</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Filter</td>
-                <td class='best-cell'><span class='metric-value'>34.81</span><br><span class='metric-ci'>[34.37, 35.29]</span></td>
-                <td class=''><span class='metric-value'>27.87</span><br><span class='metric-ci'>[27.60, 28.15]</span></td>
-                <td class='best-cell'><span class='metric-value'>0.185</span><br><span class='metric-ci'>[0.184, 0.186]</span></td>
-                <td class=''><span class='metric-value'>0.761</span><br><span class='metric-ci'>[0.756, 0.766]</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Rev-Filter</td>
-                <td class=''><span class='metric-value'>28.57</span><br><span class='metric-ci'>[28.06, 29.09]</span></td>
-                <td class=''><span class='metric-value'>28.52</span><br><span class='metric-ci'>[28.15, 28.89]</span></td>
-                <td class=''><span class='metric-value'>0.215</span><br><span class='metric-ci'>[0.214, 0.216]</span></td>
-                <td class=''><span class='metric-value'>0.805</span><br><span class='metric-ci'>[0.801, 0.809]</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Weight</td>
-                <td class=''><span class='metric-value'>27.46</span><br><span class='metric-ci'>[27.12, 31.32]</span></td>
-                <td class=''><span class='metric-value'>28.01</span><br><span class='metric-ci'>[27.72, 28.32]</span></td>
-                <td class=''><span class='metric-value'>0.186</span><br><span class='metric-ci'>[0.185, 0.186]</span></td>
-                <td class='best-cell'><span class='metric-value'>0.760</span><br><span class='metric-ci'>[0.755, 0.765]</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Rev-Weight</td>
-                <td class=''><span class='metric-value'>28.69</span><br><span class='metric-ci'>[28.20, 29.20]</span></td>
-                <td class=''><span class='metric-value'>29.14</span><br><span class='metric-ci'>[28.77, 29.52]</span></td>
-                <td class=''><span class='metric-value'>0.190</span><br><span class='metric-ci'>[0.189, 0.191]</span></td>
-                <td class=''><span class='metric-value'>0.788</span><br><span class='metric-ci'>[0.782, 0.793]</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-
-      <div class="results-block">
-        <h3 class="subsection-title">Test2</h3>
-        <div class="table-card">
-          <table class="results-table paper-results-table">
-            <thead>
-              <tr>
-                <th>Target</th>
-                <th>Setting</th>
-                <th>M-F1</th>
-                <th>UAR</th>
-                <th>JSD↓</th>
-                <th>KLD↓</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class='target-name'>Hard</td>
-                <td class='setting-name'>CE</td>
-                <td class=''><span class='metric-value'>26.29</span><br><span class='metric-ci'>[25.41, 30.37]</span></td>
-                <td class=''><span class='metric-value'>21.79</span><br><span class='metric-ci'>[21.06, 22.52]</span></td>
-                <td class=''><span class='metric-value'>0.340</span><br><span class='metric-ci'>[0.336, 0.343]</span></td>
-                <td class=''><span class='metric-value'>1.757</span><br><span class='metric-ci'>[1.728, 1.786]</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Hard</td>
-                <td class='setting-name'>CBCE</td>
-                <td class=''><span class='metric-value'>20.08</span><br><span class='metric-ci'>[19.59, 25.98]</span></td>
-                <td class=''><span class='metric-value'>20.15</span><br><span class='metric-ci'>[19.43, 20.87]</span></td>
-                <td class=''><span class='metric-value'>0.356</span><br><span class='metric-ci'>[0.353, 0.359]</span></td>
-                <td class=''><span class='metric-value'>1.704</span><br><span class='metric-ci'>[1.678, 1.730]</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Primary</td>
-                <td class='setting-name'>KLD</td>
-                <td class=''><span class='metric-value'>21.02</span><br><span class='metric-ci'>[20.39, 26.53]</span></td>
-                <td class=''><span class='metric-value'>22.14</span><br><span class='metric-ci'>[21.49, 22.81]</span></td>
-                <td class=''><span class='metric-value'>0.211</span><br><span class='metric-ci'>[0.210, 0.213]</span></td>
-                <td class=''><span class='metric-value'>0.914</span><br><span class='metric-ci'>[0.905, 0.924]</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.8P/0.2S</td>
-                <td class='setting-name'>KLD</td>
-                <td class=''><span class='metric-value'>21.63</span><br><span class='metric-ci'>[20.91, 22.34]</span></td>
-                <td class=''><span class='metric-value'>22.72</span><br><span class='metric-ci'>[21.66, 23.80]</span></td>
-                <td class=''><span class='metric-value'>0.239</span><br><span class='metric-ci'>[0.237, 0.241]</span></td>
-                <td class=''><span class='metric-value'>0.950</span><br><span class='metric-ci'>[0.942, 0.959]</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>KLD</td>
-                <td class=''><span class='metric-value'>28.16</span><br><span class='metric-ci'>[27.18, 32.63]</span></td>
-                <td class=''><span class='metric-value'>22.24</span><br><span class='metric-ci'>[21.60, 22.90]</span></td>
-                <td class=''><span class='metric-value'>0.199</span><br><span class='metric-ci'>[0.197, 0.201]</span></td>
-                <td class=''><span class='metric-value'>0.876</span><br><span class='metric-ci'>[0.867, 0.885]</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Weighted KLD</td>
-                <td class=''><span class='metric-value'>22.49</span><br><span class='metric-ci'>[21.73, 23.25]</span></td>
-                <td class='best-cell'><span class='metric-value'>23.09</span><br><span class='metric-ci'>[22.08, 24.13]</span></td>
-                <td class=''><span class='metric-value'>0.233</span><br><span class='metric-ci'>[0.231, 0.235]</span></td>
-                <td class=''><span class='metric-value'>0.940</span><br><span class='metric-ci'>[0.932, 0.949]</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Filter</td>
-                <td class=''><span class='metric-value'>31.51</span><br><span class='metric-ci'>[30.66, 37.81]</span></td>
-                <td class=''><span class='metric-value'>22.00</span><br><span class='metric-ci'>[21.44, 22.56]</span></td>
-                <td class='best-cell'><span class='metric-value'>0.194</span><br><span class='metric-ci'>[0.192, 0.195]</span></td>
-                <td class=''><span class='metric-value'>0.812</span><br><span class='metric-ci'>[0.805, 0.820]</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Rev-Filter</td>
-                <td class=''><span class='metric-value'>24.15</span><br><span class='metric-ci'>[23.51, 32.56]</span></td>
-                <td class=''><span class='metric-value'>21.80</span><br><span class='metric-ci'>[21.16, 22.45]</span></td>
-                <td class=''><span class='metric-value'>0.213</span><br><span class='metric-ci'>[0.211, 0.214]</span></td>
-                <td class=''><span class='metric-value'>0.810</span><br><span class='metric-ci'>[0.803, 0.817]</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Weight</td>
-                <td class='best-cell'><span class='metric-value'>31.81</span><br><span class='metric-ci'>[30.86, 37.51]</span></td>
-                <td class=''><span class='metric-value'>22.16</span><br><span class='metric-ci'>[21.60, 22.75]</span></td>
-                <td class=''><span class='metric-value'>0.194</span><br><span class='metric-ci'>[0.193, 0.196]</span></td>
-                <td class='best-cell'><span class='metric-value'>0.809</span><br><span class='metric-ci'>[0.801, 0.817]</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Rev-Weight</td>
-                <td class=''><span class='metric-value'>24.68</span><br><span class='metric-ci'>[23.99, 29.17]</span></td>
-                <td class=''><span class='metric-value'>22.79</span><br><span class='metric-ci'>[22.12, 23.46]</span></td>
-                <td class=''><span class='metric-value'>0.200</span><br><span class='metric-ci'>[0.199, 0.202]</span></td>
-                <td class=''><span class='metric-value'>0.845</span><br><span class='metric-ci'>[0.837, 0.854]</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
+<div class="results-block">
+<h3 class="subsection-title">Test1</h3>
+<div class="table-card">
+<table class="results-table paper-results-table">
+<thead>
+<tr>
+<th>Target</th>
+<th>Setting</th>
+<th>M-F1</th>
+<th>UAR</th>
+<th>JSD↓</th>
+<th>KLD↓</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="target-name">Hard</td>
+<td class="setting-name">CE</td>
+<td class=""><span class="metric-value">28.69</span><br/><span class="metric-ci">[28.29, 32.57]</span></td>
+<td class=""><span class="metric-value">29.29</span><br/><span class="metric-ci">[28.88, 29.69]</span></td>
+<td class=""><span class="metric-value">0.322</span><br/><span class="metric-ci">[0.320, 0.325]</span></td>
+<td class=""><span class="metric-value">1.672</span><br/><span class="metric-ci">[1.655, 1.688]</span></td>
+</tr>
+<tr>
+<td class="target-name">Hard</td>
+<td class="setting-name">CBCE</td>
+<td class=""><span class="metric-value">28.36</span><br/><span class="metric-ci">[27.83, 28.93]</span></td>
+<td class=""><span class="metric-value">27.11</span><br/><span class="metric-ci">[26.68, 27.55]</span></td>
+<td class=""><span class="metric-value">0.329</span><br/><span class="metric-ci">[0.327, 0.331]</span></td>
+<td class=""><span class="metric-value">1.602</span><br/><span class="metric-ci">[1.587, 1.617]</span></td>
+</tr>
+<tr>
+<td class="target-name">Primary</td>
+<td class="setting-name">KLD</td>
+<td class=""><span class="metric-value">28.36</span><br/><span class="metric-ci">[27.87, 28.84]</span></td>
+<td class=""><span class="metric-value">28.92</span><br/><span class="metric-ci">[28.57, 29.26]</span></td>
+<td class=""><span class="metric-value">0.203</span><br/><span class="metric-ci">[0.202, 0.204]</span></td>
+<td class=""><span class="metric-value">0.851</span><br/><span class="metric-ci">[0.845, 0.857]</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.8P/0.2S</td>
+<td class="setting-name">KLD</td>
+<td class=""><span class="metric-value">29.37</span><br/><span class="metric-ci">[28.95, 29.79]</span></td>
+<td class=""><span class="metric-value">32.90</span><br/><span class="metric-ci">[32.20, 33.61]</span></td>
+<td class=""><span class="metric-value">0.235</span><br/><span class="metric-ci">[0.234, 0.236]</span></td>
+<td class=""><span class="metric-value">0.928</span><br/><span class="metric-ci">[0.923, 0.933]</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">KLD</td>
+<td class=""><span class="metric-value">29.22</span><br/><span class="metric-ci">[28.69, 29.73]</span></td>
+<td class=""><span class="metric-value">29.07</span><br/><span class="metric-ci">[28.69, 29.47]</span></td>
+<td class=""><span class="metric-value">0.189</span><br/><span class="metric-ci">[0.188, 0.190]</span></td>
+<td class=""><span class="metric-value">0.809</span><br/><span class="metric-ci">[0.803, 0.815]</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Weighted KLD</td>
+<td class=""><span class="metric-value">30.39</span><br/><span class="metric-ci">[29.94, 30.83]</span></td>
+<td class="best-cell"><span class="metric-value">33.06</span><br/><span class="metric-ci">[32.38, 33.74]</span></td>
+<td class=""><span class="metric-value">0.228</span><br/><span class="metric-ci">[0.227, 0.229]</span></td>
+<td class=""><span class="metric-value">0.919</span><br/><span class="metric-ci">[0.913, 0.924]</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Filter</td>
+<td class="best-cell"><span class="metric-value">34.81</span><br/><span class="metric-ci">[34.37, 35.29]</span></td>
+<td class=""><span class="metric-value">27.87</span><br/><span class="metric-ci">[27.60, 28.15]</span></td>
+<td class="best-cell"><span class="metric-value">0.185</span><br/><span class="metric-ci">[0.184, 0.186]</span></td>
+<td class=""><span class="metric-value">0.761</span><br/><span class="metric-ci">[0.756, 0.766]</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Rev-Filter</td>
+<td class=""><span class="metric-value">28.57</span><br/><span class="metric-ci">[28.06, 29.09]</span></td>
+<td class=""><span class="metric-value">28.52</span><br/><span class="metric-ci">[28.15, 28.89]</span></td>
+<td class=""><span class="metric-value">0.215</span><br/><span class="metric-ci">[0.214, 0.216]</span></td>
+<td class=""><span class="metric-value">0.805</span><br/><span class="metric-ci">[0.801, 0.809]</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Weight</td>
+<td class=""><span class="metric-value">27.46</span><br/><span class="metric-ci">[27.12, 31.32]</span></td>
+<td class=""><span class="metric-value">28.01</span><br/><span class="metric-ci">[27.72, 28.32]</span></td>
+<td class=""><span class="metric-value">0.186</span><br/><span class="metric-ci">[0.185, 0.186]</span></td>
+<td class="best-cell"><span class="metric-value">0.760</span><br/><span class="metric-ci">[0.755, 0.765]</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Rev-Weight</td>
+<td class=""><span class="metric-value">28.69</span><br/><span class="metric-ci">[28.20, 29.20]</span></td>
+<td class=""><span class="metric-value">29.14</span><br/><span class="metric-ci">[28.77, 29.52]</span></td>
+<td class=""><span class="metric-value">0.190</span><br/><span class="metric-ci">[0.189, 0.191]</span></td>
+<td class=""><span class="metric-value">0.788</span><br/><span class="metric-ci">[0.782, 0.793]</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="results-block">
+<h3 class="subsection-title">Test2</h3>
+<div class="table-card">
+<table class="results-table paper-results-table">
+<thead>
+<tr>
+<th>Target</th>
+<th>Setting</th>
+<th>M-F1</th>
+<th>UAR</th>
+<th>JSD↓</th>
+<th>KLD↓</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="target-name">Hard</td>
+<td class="setting-name">CE</td>
+<td class=""><span class="metric-value">26.29</span><br/><span class="metric-ci">[25.41, 30.37]</span></td>
+<td class=""><span class="metric-value">21.79</span><br/><span class="metric-ci">[21.06, 22.52]</span></td>
+<td class=""><span class="metric-value">0.340</span><br/><span class="metric-ci">[0.336, 0.343]</span></td>
+<td class=""><span class="metric-value">1.757</span><br/><span class="metric-ci">[1.728, 1.786]</span></td>
+</tr>
+<tr>
+<td class="target-name">Hard</td>
+<td class="setting-name">CBCE</td>
+<td class=""><span class="metric-value">20.08</span><br/><span class="metric-ci">[19.59, 25.98]</span></td>
+<td class=""><span class="metric-value">20.15</span><br/><span class="metric-ci">[19.43, 20.87]</span></td>
+<td class=""><span class="metric-value">0.356</span><br/><span class="metric-ci">[0.353, 0.359]</span></td>
+<td class=""><span class="metric-value">1.704</span><br/><span class="metric-ci">[1.678, 1.730]</span></td>
+</tr>
+<tr>
+<td class="target-name">Primary</td>
+<td class="setting-name">KLD</td>
+<td class=""><span class="metric-value">21.02</span><br/><span class="metric-ci">[20.39, 26.53]</span></td>
+<td class=""><span class="metric-value">22.14</span><br/><span class="metric-ci">[21.49, 22.81]</span></td>
+<td class=""><span class="metric-value">0.211</span><br/><span class="metric-ci">[0.210, 0.213]</span></td>
+<td class=""><span class="metric-value">0.914</span><br/><span class="metric-ci">[0.905, 0.924]</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.8P/0.2S</td>
+<td class="setting-name">KLD</td>
+<td class=""><span class="metric-value">21.63</span><br/><span class="metric-ci">[20.91, 22.34]</span></td>
+<td class=""><span class="metric-value">22.72</span><br/><span class="metric-ci">[21.66, 23.80]</span></td>
+<td class=""><span class="metric-value">0.239</span><br/><span class="metric-ci">[0.237, 0.241]</span></td>
+<td class=""><span class="metric-value">0.950</span><br/><span class="metric-ci">[0.942, 0.959]</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">KLD</td>
+<td class=""><span class="metric-value">28.16</span><br/><span class="metric-ci">[27.18, 32.63]</span></td>
+<td class=""><span class="metric-value">22.24</span><br/><span class="metric-ci">[21.60, 22.90]</span></td>
+<td class=""><span class="metric-value">0.199</span><br/><span class="metric-ci">[0.197, 0.201]</span></td>
+<td class=""><span class="metric-value">0.876</span><br/><span class="metric-ci">[0.867, 0.885]</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Weighted KLD</td>
+<td class=""><span class="metric-value">22.49</span><br/><span class="metric-ci">[21.73, 23.25]</span></td>
+<td class="best-cell"><span class="metric-value">23.09</span><br/><span class="metric-ci">[22.08, 24.13]</span></td>
+<td class=""><span class="metric-value">0.233</span><br/><span class="metric-ci">[0.231, 0.235]</span></td>
+<td class=""><span class="metric-value">0.940</span><br/><span class="metric-ci">[0.932, 0.949]</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Filter</td>
+<td class=""><span class="metric-value">31.51</span><br/><span class="metric-ci">[30.66, 37.81]</span></td>
+<td class=""><span class="metric-value">22.00</span><br/><span class="metric-ci">[21.44, 22.56]</span></td>
+<td class="best-cell"><span class="metric-value">0.194</span><br/><span class="metric-ci">[0.192, 0.195]</span></td>
+<td class=""><span class="metric-value">0.812</span><br/><span class="metric-ci">[0.805, 0.820]</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Rev-Filter</td>
+<td class=""><span class="metric-value">24.15</span><br/><span class="metric-ci">[23.51, 32.56]</span></td>
+<td class=""><span class="metric-value">21.80</span><br/><span class="metric-ci">[21.16, 22.45]</span></td>
+<td class=""><span class="metric-value">0.213</span><br/><span class="metric-ci">[0.211, 0.214]</span></td>
+<td class=""><span class="metric-value">0.810</span><br/><span class="metric-ci">[0.803, 0.817]</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Weight</td>
+<td class="best-cell"><span class="metric-value">31.81</span><br/><span class="metric-ci">[30.86, 37.51]</span></td>
+<td class=""><span class="metric-value">22.16</span><br/><span class="metric-ci">[21.60, 22.75]</span></td>
+<td class=""><span class="metric-value">0.194</span><br/><span class="metric-ci">[0.193, 0.196]</span></td>
+<td class="best-cell"><span class="metric-value">0.809</span><br/><span class="metric-ci">[0.801, 0.817]</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Rev-Weight</td>
+<td class=""><span class="metric-value">24.68</span><br/><span class="metric-ci">[23.99, 29.17]</span></td>
+<td class=""><span class="metric-value">22.79</span><br/><span class="metric-ci">[22.12, 23.46]</span></td>
+<td class=""><span class="metric-value">0.200</span><br/><span class="metric-ci">[0.199, 0.202]</span></td>
+<td class=""><span class="metric-value">0.845</span><br/><span class="metric-ci">[0.837, 0.854]</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <div class="analysis-card results-analysis">
-        <p>
+<p>
           Distributional objectives primarily improve alignment with annotator vote distributions, as reflected by lower JSD and KLD. Macro-F1 should be interpreted alongside these divergence measures because hard-label systems may benefit from collapsing ambiguous samples into the residual <em>Other</em> category, while distributional targets preserve uncertainty across emotion categories.
         </p>
-      </div>
-
-    </section>
-
-
+</div>
+</section>
 <section class="section" id="vad-results">
-      <h2 class="section-title">Dimensional VAD Results</h2>
-      <p class="section-text">
+<h2 class="section-title">Dimensional VAD Results</h2>
+<p class="section-text">
         Dimensional emotion prediction is evaluated using concordance correlation coefficient (CCC) for valence, arousal, and dominance. Mean CCC reports the average across the three affective dimensions, with higher values indicating stronger agreement with the reference dimensional annotations.
       </p>
-
-
-      <div class="results-block">
-        <h3 class="subsection-title">Test1</h3>
-        <div class="table-card">
-          <table class="results-table paper-results-table">
-            <thead>
-              <tr>
-                <th>Target</th>
-                <th>Setting</th>
-                <th>Valence CCC</th>
-                <th>Arousal CCC</th>
-                <th>Dominance CCC</th>
-                <th>Mean CCC</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class='target-name'>Hard</td>
-                <td class='setting-name'>CE</td>
-                <td class=''><span class='metric-value'>0.638</span></td>
-                <td class=''><span class='metric-value'>0.670</span></td>
-                <td class=''><span class='metric-value'>0.562</span></td>
-                <td class=''><span class='metric-value'>0.623</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Hard</td>
-                <td class='setting-name'>CBCE</td>
-                <td class=''><span class='metric-value'>0.655</span></td>
-                <td class=''><span class='metric-value'>0.679</span></td>
-                <td class=''><span class='metric-value'>0.572</span></td>
-                <td class=''><span class='metric-value'>0.635</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Primary</td>
-                <td class='setting-name'>KLD</td>
-                <td class=''><span class='metric-value'>0.671</span></td>
-                <td class=''><span class='metric-value'>0.675</span></td>
-                <td class=''><span class='metric-value'>0.576</span></td>
-                <td class=''><span class='metric-value'>0.640</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.8P/0.2S</td>
-                <td class='setting-name'>KLD</td>
-                <td class=''><span class='metric-value'>0.671</span></td>
-                <td class=''><span class='metric-value'>0.677</span></td>
-                <td class=''><span class='metric-value'>0.578</span></td>
-                <td class=''><span class='metric-value'>0.642</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>KLD</td>
-                <td class='best-cell'><span class='metric-value'>0.675</span></td>
-                <td class=''><span class='metric-value'>0.685</span></td>
-                <td class='best-cell'><span class='metric-value'>0.593</span></td>
-                <td class='best-cell'><span class='metric-value'>0.651</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>WKLD</td>
-                <td class=''><span class='metric-value'>0.673</span></td>
-                <td class=''><span class='metric-value'>0.676</span></td>
-                <td class=''><span class='metric-value'>0.581</span></td>
-                <td class=''><span class='metric-value'>0.643</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Filter</td>
-                <td class=''><span class='metric-value'>0.672</span></td>
-                <td class='best-cell'><span class='metric-value'>0.687</span></td>
-                <td class=''><span class='metric-value'>0.590</span></td>
-                <td class=''><span class='metric-value'>0.650</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Rev-Filter</td>
-                <td class=''><span class='metric-value'>0.670</span></td>
-                <td class=''><span class='metric-value'>0.684</span></td>
-                <td class=''><span class='metric-value'>0.585</span></td>
-                <td class=''><span class='metric-value'>0.646</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Weight</td>
-                <td class=''><span class='metric-value'>0.674</span></td>
-                <td class=''><span class='metric-value'>0.685</span></td>
-                <td class=''><span class='metric-value'>0.582</span></td>
-                <td class=''><span class='metric-value'>0.647</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Rev-Weight</td>
-                <td class=''><span class='metric-value'>0.667</span></td>
-                <td class=''><span class='metric-value'>0.679</span></td>
-                <td class=''><span class='metric-value'>0.580</span></td>
-                <td class=''><span class='metric-value'>0.642</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-
-      <div class="results-block">
-        <h3 class="subsection-title">Test2</h3>
-        <div class="table-card">
-          <table class="results-table paper-results-table">
-            <thead>
-              <tr>
-                <th>Target</th>
-                <th>Setting</th>
-                <th>Valence CCC</th>
-                <th>Arousal CCC</th>
-                <th>Dominance CCC</th>
-                <th>Mean CCC</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class='target-name'>Hard</td>
-                <td class='setting-name'>CE</td>
-                <td class=''><span class='metric-value'>0.436</span></td>
-                <td class=''><span class='metric-value'>0.507</span></td>
-                <td class=''><span class='metric-value'>0.376</span></td>
-                <td class=''><span class='metric-value'>0.440</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Hard</td>
-                <td class='setting-name'>CBCE</td>
-                <td class=''><span class='metric-value'>0.450</span></td>
-                <td class=''><span class='metric-value'>0.515</span></td>
-                <td class=''><span class='metric-value'>0.391</span></td>
-                <td class=''><span class='metric-value'>0.452</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Primary</td>
-                <td class='setting-name'>KLD</td>
-                <td class=''><span class='metric-value'>0.469</span></td>
-                <td class=''><span class='metric-value'>0.512</span></td>
-                <td class=''><span class='metric-value'>0.383</span></td>
-                <td class=''><span class='metric-value'>0.455</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.8P/0.2S</td>
-                <td class='setting-name'>KLD</td>
-                <td class=''><span class='metric-value'>0.465</span></td>
-                <td class=''><span class='metric-value'>0.523</span></td>
-                <td class=''><span class='metric-value'>0.398</span></td>
-                <td class=''><span class='metric-value'>0.462</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>KLD</td>
-                <td class='best-cell'><span class='metric-value'>0.471</span></td>
-                <td class=''><span class='metric-value'>0.520</span></td>
-                <td class=''><span class='metric-value'>0.401</span></td>
-                <td class=''><span class='metric-value'>0.464</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>WKLD</td>
-                <td class=''><span class='metric-value'>0.469</span></td>
-                <td class=''><span class='metric-value'>0.524</span></td>
-                <td class='best-cell'><span class='metric-value'>0.403</span></td>
-                <td class='best-cell'><span class='metric-value'>0.465</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Filter</td>
-                <td class=''><span class='metric-value'>0.458</span></td>
-                <td class='best-cell'><span class='metric-value'>0.525</span></td>
-                <td class=''><span class='metric-value'>0.403</span></td>
-                <td class=''><span class='metric-value'>0.462</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Rev-Filter</td>
-                <td class=''><span class='metric-value'>0.465</span></td>
-                <td class=''><span class='metric-value'>0.523</span></td>
-                <td class=''><span class='metric-value'>0.393</span></td>
-                <td class=''><span class='metric-value'>0.461</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Weight</td>
-                <td class=''><span class='metric-value'>0.467</span></td>
-                <td class=''><span class='metric-value'>0.524</span></td>
-                <td class=''><span class='metric-value'>0.399</span></td>
-                <td class=''><span class='metric-value'>0.463</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Rev-Weight</td>
-                <td class=''><span class='metric-value'>0.462</span></td>
-                <td class=''><span class='metric-value'>0.518</span></td>
-                <td class=''><span class='metric-value'>0.390</span></td>
-                <td class=''><span class='metric-value'>0.456</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="analysis-card vad-analysis">
-        <p>
+<div class="results-block">
+<h3 class="subsection-title">Test1</h3>
+<div class="table-card">
+<table class="results-table paper-results-table">
+<thead>
+<tr>
+<th>Target</th>
+<th>Setting</th>
+<th>Valence CCC</th>
+<th>Arousal CCC</th>
+<th>Dominance CCC</th>
+<th>Mean CCC</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="target-name">Hard</td>
+<td class="setting-name">CE</td>
+<td class=""><span class="metric-value">0.638</span></td>
+<td class=""><span class="metric-value">0.670</span></td>
+<td class=""><span class="metric-value">0.562</span></td>
+<td class=""><span class="metric-value">0.623</span></td>
+</tr>
+<tr>
+<td class="target-name">Hard</td>
+<td class="setting-name">CBCE</td>
+<td class=""><span class="metric-value">0.655</span></td>
+<td class=""><span class="metric-value">0.679</span></td>
+<td class=""><span class="metric-value">0.572</span></td>
+<td class=""><span class="metric-value">0.635</span></td>
+</tr>
+<tr>
+<td class="target-name">Primary</td>
+<td class="setting-name">KLD</td>
+<td class=""><span class="metric-value">0.671</span></td>
+<td class=""><span class="metric-value">0.675</span></td>
+<td class=""><span class="metric-value">0.576</span></td>
+<td class=""><span class="metric-value">0.640</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.8P/0.2S</td>
+<td class="setting-name">KLD</td>
+<td class=""><span class="metric-value">0.671</span></td>
+<td class=""><span class="metric-value">0.677</span></td>
+<td class=""><span class="metric-value">0.578</span></td>
+<td class=""><span class="metric-value">0.642</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">KLD</td>
+<td class="best-cell"><span class="metric-value">0.675</span></td>
+<td class=""><span class="metric-value">0.685</span></td>
+<td class="best-cell"><span class="metric-value">0.593</span></td>
+<td class="best-cell"><span class="metric-value">0.651</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">WKLD</td>
+<td class=""><span class="metric-value">0.673</span></td>
+<td class=""><span class="metric-value">0.676</span></td>
+<td class=""><span class="metric-value">0.581</span></td>
+<td class=""><span class="metric-value">0.643</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Filter</td>
+<td class=""><span class="metric-value">0.672</span></td>
+<td class="best-cell"><span class="metric-value">0.687</span></td>
+<td class=""><span class="metric-value">0.590</span></td>
+<td class=""><span class="metric-value">0.650</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Rev-Filter</td>
+<td class=""><span class="metric-value">0.670</span></td>
+<td class=""><span class="metric-value">0.684</span></td>
+<td class=""><span class="metric-value">0.585</span></td>
+<td class=""><span class="metric-value">0.646</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Weight</td>
+<td class=""><span class="metric-value">0.674</span></td>
+<td class=""><span class="metric-value">0.685</span></td>
+<td class=""><span class="metric-value">0.582</span></td>
+<td class=""><span class="metric-value">0.647</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Rev-Weight</td>
+<td class=""><span class="metric-value">0.667</span></td>
+<td class=""><span class="metric-value">0.679</span></td>
+<td class=""><span class="metric-value">0.580</span></td>
+<td class=""><span class="metric-value">0.642</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="results-block">
+<h3 class="subsection-title">Test2</h3>
+<div class="table-card">
+<table class="results-table paper-results-table">
+<thead>
+<tr>
+<th>Target</th>
+<th>Setting</th>
+<th>Valence CCC</th>
+<th>Arousal CCC</th>
+<th>Dominance CCC</th>
+<th>Mean CCC</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="target-name">Hard</td>
+<td class="setting-name">CE</td>
+<td class=""><span class="metric-value">0.436</span></td>
+<td class=""><span class="metric-value">0.507</span></td>
+<td class=""><span class="metric-value">0.376</span></td>
+<td class=""><span class="metric-value">0.440</span></td>
+</tr>
+<tr>
+<td class="target-name">Hard</td>
+<td class="setting-name">CBCE</td>
+<td class=""><span class="metric-value">0.450</span></td>
+<td class=""><span class="metric-value">0.515</span></td>
+<td class=""><span class="metric-value">0.391</span></td>
+<td class=""><span class="metric-value">0.452</span></td>
+</tr>
+<tr>
+<td class="target-name">Primary</td>
+<td class="setting-name">KLD</td>
+<td class=""><span class="metric-value">0.469</span></td>
+<td class=""><span class="metric-value">0.512</span></td>
+<td class=""><span class="metric-value">0.383</span></td>
+<td class=""><span class="metric-value">0.455</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.8P/0.2S</td>
+<td class="setting-name">KLD</td>
+<td class=""><span class="metric-value">0.465</span></td>
+<td class=""><span class="metric-value">0.523</span></td>
+<td class=""><span class="metric-value">0.398</span></td>
+<td class=""><span class="metric-value">0.462</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">KLD</td>
+<td class="best-cell"><span class="metric-value">0.471</span></td>
+<td class=""><span class="metric-value">0.520</span></td>
+<td class=""><span class="metric-value">0.401</span></td>
+<td class=""><span class="metric-value">0.464</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">WKLD</td>
+<td class=""><span class="metric-value">0.469</span></td>
+<td class=""><span class="metric-value">0.524</span></td>
+<td class="best-cell"><span class="metric-value">0.403</span></td>
+<td class="best-cell"><span class="metric-value">0.465</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Filter</td>
+<td class=""><span class="metric-value">0.458</span></td>
+<td class="best-cell"><span class="metric-value">0.525</span></td>
+<td class=""><span class="metric-value">0.403</span></td>
+<td class=""><span class="metric-value">0.462</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Rev-Filter</td>
+<td class=""><span class="metric-value">0.465</span></td>
+<td class=""><span class="metric-value">0.523</span></td>
+<td class=""><span class="metric-value">0.393</span></td>
+<td class=""><span class="metric-value">0.461</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Weight</td>
+<td class=""><span class="metric-value">0.467</span></td>
+<td class=""><span class="metric-value">0.524</span></td>
+<td class=""><span class="metric-value">0.399</span></td>
+<td class=""><span class="metric-value">0.463</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Rev-Weight</td>
+<td class=""><span class="metric-value">0.462</span></td>
+<td class=""><span class="metric-value">0.518</span></td>
+<td class=""><span class="metric-value">0.390</span></td>
+<td class=""><span class="metric-value">0.456</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="analysis-card vad-analysis">
+<p>
           VAD prediction is evaluated jointly with categorical emotion recognition in the multitask architecture. These results are included to show whether changes in categorical supervision also affect dimensional affect modeling.
         </p>
-      </div>
-
-
-    </section>
-
-
-
+</div>
+</section>
 <section class="section" id="entropy-stratified-results">
-      <h2 class="section-title">Entropy-Stratified Macro-F1</h2>
-      <p class="section-text">
+<h2 class="section-title">Entropy-Stratified Macro-F1</h2>
+<p class="section-text">
         Macro-F1 is reported across entropy-based ambiguity bins. Entropy is computed from the annotation distribution and used to stratify utterances by the degree of annotator uncertainty.
       </p>
-
-
-
-      <div class="results-block">
-        <h3 class="subsection-title">Test1</h3>
-        <div class="table-card">
-          <table class="results-table paper-results-table">
-            <thead>
-              <tr>
-                <th>Target</th>
-                <th>Setting</th>
-                <th>Low</th>
-                <th>Mid</th>
-                <th>High</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class='target-name'>Hard</td>
-                <td class='setting-name'>CE</td>
-                <td class=''><span class='metric-value'>0.33</span></td>
-                <td class=''><span class='metric-value'>0.24</span></td>
-                <td class=''><span class='metric-value'>0.14</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Hard</td>
-                <td class='setting-name'>CBCE</td>
-                <td class=''><span class='metric-value'>0.30</span></td>
-                <td class=''><span class='metric-value'>0.24</span></td>
-                <td class=''><span class='metric-value'>0.18</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Primary</td>
-                <td class='setting-name'>KLD</td>
-                <td class='best-cell'><span class='metric-value'>0.35</span></td>
-                <td class=''><span class='metric-value'>0.26</span></td>
-                <td class=''><span class='metric-value'>0.12</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.8P/0.2S</td>
-                <td class='setting-name'>KLD</td>
-                <td class=''><span class='metric-value'>0.32</span></td>
-                <td class=''><span class='metric-value'>0.27</span></td>
-                <td class=''><span class='metric-value'>0.17</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>KLD</td>
-                <td class=''><span class='metric-value'>0.34</span></td>
-                <td class=''><span class='metric-value'>0.27</span></td>
-                <td class=''><span class='metric-value'>0.18</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>WKLD</td>
-                <td class=''><span class='metric-value'>0.33</span></td>
-                <td class='best-cell'><span class='metric-value'>0.28</span></td>
-                <td class='best-cell'><span class='metric-value'>0.18</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Filter</td>
-                <td class=''><span class='metric-value'>0.34</span></td>
-                <td class=''><span class='metric-value'>0.24</span></td>
-                <td class=''><span class='metric-value'>0.15</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Rev-Filter</td>
-                <td class=''><span class='metric-value'>0.34</span></td>
-                <td class=''><span class='metric-value'>0.26</span></td>
-                <td class=''><span class='metric-value'>0.16</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Weight</td>
-                <td class=''><span class='metric-value'>0.34</span></td>
-                <td class=''><span class='metric-value'>0.25</span></td>
-                <td class=''><span class='metric-value'>0.15</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Rev-Weight</td>
-                <td class=''><span class='metric-value'>0.34</span></td>
-                <td class=''><span class='metric-value'>0.26</span></td>
-                <td class=''><span class='metric-value'>0.17</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-
-      <div class="results-block">
-        <h3 class="subsection-title">Test2</h3>
-        <div class="table-card">
-          <table class="results-table paper-results-table">
-            <thead>
-              <tr>
-                <th>Target</th>
-                <th>Setting</th>
-                <th>Low</th>
-                <th>Mid</th>
-                <th>High</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class='target-name'>Hard</td>
-                <td class='setting-name'>CE</td>
-                <td class=''><span class='metric-value'>0.21</span></td>
-                <td class=''><span class='metric-value'>0.19</span></td>
-                <td class=''><span class='metric-value'>0.14</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Hard</td>
-                <td class='setting-name'>CBCE</td>
-                <td class=''><span class='metric-value'>0.20</span></td>
-                <td class=''><span class='metric-value'>0.19</span></td>
-                <td class=''><span class='metric-value'>0.15</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Primary</td>
-                <td class='setting-name'>KLD</td>
-                <td class=''><span class='metric-value'>0.26</span></td>
-                <td class=''><span class='metric-value'>0.21</span></td>
-                <td class=''><span class='metric-value'>0.12</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.8P/0.2S</td>
-                <td class='setting-name'>KLD</td>
-                <td class=''><span class='metric-value'>0.23</span></td>
-                <td class=''><span class='metric-value'>0.21</span></td>
-                <td class='best-cell'><span class='metric-value'>0.15</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>KLD</td>
-                <td class=''><span class='metric-value'>0.25</span></td>
-                <td class=''><span class='metric-value'>0.21</span></td>
-                <td class=''><span class='metric-value'>0.14</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>WKLD</td>
-                <td class=''><span class='metric-value'>0.24</span></td>
-                <td class='best-cell'><span class='metric-value'>0.22</span></td>
-                <td class=''><span class='metric-value'>0.15</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Filter</td>
-                <td class=''><span class='metric-value'>0.25</span></td>
-                <td class=''><span class='metric-value'>0.20</span></td>
-                <td class=''><span class='metric-value'>0.13</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Rev-Filter</td>
-                <td class=''><span class='metric-value'>0.25</span></td>
-                <td class=''><span class='metric-value'>0.21</span></td>
-                <td class=''><span class='metric-value'>0.13</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Weight</td>
-                <td class='best-cell'><span class='metric-value'>0.26</span></td>
-                <td class=''><span class='metric-value'>0.21</span></td>
-                <td class=''><span class='metric-value'>0.13</span></td>
-              </tr>
-              <tr>
-                <td class='target-name'>Merged 0.9P/0.1S</td>
-                <td class='setting-name'>Rev-Weight</td>
-                <td class=''><span class='metric-value'>0.25</span></td>
-                <td class=''><span class='metric-value'>0.22</span></td>
-                <td class=''><span class='metric-value'>0.14</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="analysis-card entropy-analysis">
-        <p>
+<div class="results-block">
+<h3 class="subsection-title">Test1</h3>
+<div class="table-card">
+<table class="results-table paper-results-table">
+<thead>
+<tr>
+<th>Target</th>
+<th>Setting</th>
+<th>Low</th>
+<th>Mid</th>
+<th>High</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="target-name">Hard</td>
+<td class="setting-name">CE</td>
+<td class=""><span class="metric-value">0.33</span></td>
+<td class=""><span class="metric-value">0.24</span></td>
+<td class=""><span class="metric-value">0.14</span></td>
+</tr>
+<tr>
+<td class="target-name">Hard</td>
+<td class="setting-name">CBCE</td>
+<td class=""><span class="metric-value">0.30</span></td>
+<td class=""><span class="metric-value">0.24</span></td>
+<td class=""><span class="metric-value">0.18</span></td>
+</tr>
+<tr>
+<td class="target-name">Primary</td>
+<td class="setting-name">KLD</td>
+<td class="best-cell"><span class="metric-value">0.35</span></td>
+<td class=""><span class="metric-value">0.26</span></td>
+<td class=""><span class="metric-value">0.12</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.8P/0.2S</td>
+<td class="setting-name">KLD</td>
+<td class=""><span class="metric-value">0.32</span></td>
+<td class=""><span class="metric-value">0.27</span></td>
+<td class=""><span class="metric-value">0.17</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">KLD</td>
+<td class=""><span class="metric-value">0.34</span></td>
+<td class=""><span class="metric-value">0.27</span></td>
+<td class=""><span class="metric-value">0.18</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">WKLD</td>
+<td class=""><span class="metric-value">0.33</span></td>
+<td class="best-cell"><span class="metric-value">0.28</span></td>
+<td class="best-cell"><span class="metric-value">0.18</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Filter</td>
+<td class=""><span class="metric-value">0.34</span></td>
+<td class=""><span class="metric-value">0.24</span></td>
+<td class=""><span class="metric-value">0.15</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Rev-Filter</td>
+<td class=""><span class="metric-value">0.34</span></td>
+<td class=""><span class="metric-value">0.26</span></td>
+<td class=""><span class="metric-value">0.16</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Weight</td>
+<td class=""><span class="metric-value">0.34</span></td>
+<td class=""><span class="metric-value">0.25</span></td>
+<td class=""><span class="metric-value">0.15</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Rev-Weight</td>
+<td class=""><span class="metric-value">0.34</span></td>
+<td class=""><span class="metric-value">0.26</span></td>
+<td class=""><span class="metric-value">0.17</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="results-block">
+<h3 class="subsection-title">Test2</h3>
+<div class="table-card">
+<table class="results-table paper-results-table">
+<thead>
+<tr>
+<th>Target</th>
+<th>Setting</th>
+<th>Low</th>
+<th>Mid</th>
+<th>High</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="target-name">Hard</td>
+<td class="setting-name">CE</td>
+<td class=""><span class="metric-value">0.21</span></td>
+<td class=""><span class="metric-value">0.19</span></td>
+<td class=""><span class="metric-value">0.14</span></td>
+</tr>
+<tr>
+<td class="target-name">Hard</td>
+<td class="setting-name">CBCE</td>
+<td class=""><span class="metric-value">0.20</span></td>
+<td class=""><span class="metric-value">0.19</span></td>
+<td class=""><span class="metric-value">0.15</span></td>
+</tr>
+<tr>
+<td class="target-name">Primary</td>
+<td class="setting-name">KLD</td>
+<td class=""><span class="metric-value">0.26</span></td>
+<td class=""><span class="metric-value">0.21</span></td>
+<td class=""><span class="metric-value">0.12</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.8P/0.2S</td>
+<td class="setting-name">KLD</td>
+<td class=""><span class="metric-value">0.23</span></td>
+<td class=""><span class="metric-value">0.21</span></td>
+<td class="best-cell"><span class="metric-value">0.15</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">KLD</td>
+<td class=""><span class="metric-value">0.25</span></td>
+<td class=""><span class="metric-value">0.21</span></td>
+<td class=""><span class="metric-value">0.14</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">WKLD</td>
+<td class=""><span class="metric-value">0.24</span></td>
+<td class="best-cell"><span class="metric-value">0.22</span></td>
+<td class=""><span class="metric-value">0.15</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Filter</td>
+<td class=""><span class="metric-value">0.25</span></td>
+<td class=""><span class="metric-value">0.20</span></td>
+<td class=""><span class="metric-value">0.13</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Rev-Filter</td>
+<td class=""><span class="metric-value">0.25</span></td>
+<td class=""><span class="metric-value">0.21</span></td>
+<td class=""><span class="metric-value">0.13</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Weight</td>
+<td class="best-cell"><span class="metric-value">0.26</span></td>
+<td class=""><span class="metric-value">0.21</span></td>
+<td class=""><span class="metric-value">0.13</span></td>
+</tr>
+<tr>
+<td class="target-name">Merged 0.9P/0.1S</td>
+<td class="setting-name">Rev-Weight</td>
+<td class=""><span class="metric-value">0.25</span></td>
+<td class=""><span class="metric-value">0.22</span></td>
+<td class=""><span class="metric-value">0.14</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="analysis-card entropy-analysis">
+<p>
           Entropy-stratified evaluation shows how categorical performance changes as annotation uncertainty increases. High-entropy utterances remain challenging across supervision settings, indicating that perceptual ambiguity is not fully resolved by changing the categorical target alone.
         </p>
-      </div>
-
-    </section>
-
+</div>
+</section>
 <section class="section" id="citation">
-      <h2 class="section-title">Citation</h2>
-      <p class="section-text">
+<h2 class="section-title">Citation</h2>
+<p class="section-text">
         If you use this code or findings, please cite the paper.
       </p>
-
-      <pre class="bibtex"><code>@misc{omidi2026uncertainty,
+<pre class="bibtex"><code>@misc{omidi2026uncertainty,
   title = {Learning from Annotation Uncertainty: Entropy-Aware Curriculum for Speech Emotion Recognition},
   author = {Zahra Omidi and John H. L. Hansen},
   year = {2026},
@@ -1000,20 +1004,17 @@
   primaryClass = {cs.SD},
   url = {https://arxiv.org/abs/2606.27536}
 }</code></pre>
-
-      <div class="related-reference">
-        <h3>Related reference</h3>
-        <p>
+<div class="related-reference">
+<h3>Related reference</h3>
+<p>
           Barrett, L. F., Adolphs, R., Marsella, S., Martinez, A. M., &amp; Pollak, S. D. (2019).
           <a href="https://doi.org/10.1177/1529100619832930">Emotional expressions reconsidered: Challenges to inferring emotion from human facial movements</a>.
           <em>Psychological Science in the Public Interest</em>, 20(1), 1–68.
         </p>
-      </div>
-    </section>
-
-  </main>
-
-  <script>
+</div>
+</section>
+</main>
+<script>
     async function loadResultsTable() {
       const response = await fetch("assets/table2_metrics_with_bootstrap_ci.csv");
       const csv = await response.text();
@@ -1061,15 +1062,12 @@
 
     loadResultsTable();
   </script>
-
-
-  <div id="image-lightbox" class="lightbox" aria-hidden="true">
-    <button class="lightbox-close" type="button" aria-label="Close">&times;</button>
-    <img class="lightbox-img" src="" alt="">
-    <div class="lightbox-caption"></div>
-  </div>
-
-  <script>
+<div aria-hidden="true" class="lightbox" id="image-lightbox">
+<button aria-label="Close" class="lightbox-close" type="button">×</button>
+<img alt="" class="lightbox-img" src=""/>
+<div class="lightbox-caption"></div>
+</div>
+<script>
     document.querySelectorAll(".cm-thumb-card img").forEach((img) => {
       img.addEventListener("click", (event) => {
         event.preventDefault();
@@ -1109,6 +1107,5 @@
       }
     });
   </script>
-
 </body>
 </html>
